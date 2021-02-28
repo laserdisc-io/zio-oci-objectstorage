@@ -39,9 +39,7 @@ final class Live(unsafeClient: ObjectStorageAsyncClient) extends ObjectStorage.S
         )
       })
       .flatMap(is => ZStream.fromInputStreamEffect(IO(is.getInputStream()).refineToOrDie[IOException]))
-      .refineOrDie { case e: BmcException =>
-        e
-      }
+      .refineToOrDie[BmcException]
 
   def execute[I, O](f: ObjectStorageAsyncClient => Function1[AsyncHandler[I, O], JFuture[O]]): IO[BmcException, O] =
     IO.effectAsync[BmcException, O] { cb =>
