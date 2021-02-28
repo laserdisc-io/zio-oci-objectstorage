@@ -1,4 +1,4 @@
-package io.laserdisc.zio.oci
+package zio.oci
 
 import com.oracle.bmc.model.BmcException
 import com.oracle.bmc.objectstorage.responses.{GetObjectResponse, ListBucketsResponse, ListObjectsResponse}

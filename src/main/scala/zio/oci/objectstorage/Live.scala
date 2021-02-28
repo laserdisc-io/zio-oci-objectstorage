@@ -1,4 +1,4 @@
-package io.laserdisc.zio.oci.objectstorage
+package zio.oci.objectstorage
 
 import com.oracle.bmc.model.BmcException
 import com.oracle.bmc.objectstorage.ObjectStorageAsyncClient
