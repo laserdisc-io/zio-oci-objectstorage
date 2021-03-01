@@ -2,7 +2,7 @@ package zio.oci.objectstorage
 
 import com.oracle.bmc.Region
 import com.oracle.bmc.auth.{BasicAuthenticationDetailsProvider, ConfigFileAuthenticationDetailsProvider}
-import zio.{IO, Managed, UIO, ZIO, ZManaged}
+import zio.{IO, UIO, ZIO, ZManaged}
 import zio.blocking.effectBlocking
 
 final case class ObjectStorageAuth(auth: BasicAuthenticationDetailsProvider)

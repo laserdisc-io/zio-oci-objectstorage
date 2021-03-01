@@ -7,8 +7,7 @@ import com.oracle.bmc.objectstorage.requests.{GetObjectRequest, ListBucketsReque
 import com.oracle.bmc.responses.AsyncHandler
 import zio._
 import zio.blocking.Blocking
-import zio.duration._
-import zio.stream.{Stream, ZStream}
+import zio.stream.ZStream
 
 import java.util.concurrent.{Future => JFuture}
 import java.io.IOException

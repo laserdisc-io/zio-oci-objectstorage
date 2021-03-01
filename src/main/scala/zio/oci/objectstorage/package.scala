@@ -1,9 +1,9 @@
 package zio.oci
 
 import com.oracle.bmc.model.BmcException
-import com.oracle.bmc.objectstorage.responses.{GetObjectResponse, ListBucketsResponse, ListObjectsResponse}
+import com.oracle.bmc.objectstorage.responses.{ListBucketsResponse, ListObjectsResponse}
 import zio._
-import zio.stream.{Stream, ZStream}
+import zio.stream.ZStream
 import zio.blocking.Blocking
 
 package object objectstorage {

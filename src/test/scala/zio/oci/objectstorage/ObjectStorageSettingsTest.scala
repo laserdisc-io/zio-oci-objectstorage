@@ -1,11 +1,9 @@
 package zio.oci.objectstorage
 
-import com.oracle.bmc.Region
 import zio.test.DefaultRunnableSpec
 import zio.test.{assert, assertM}
 import zio.test.Assertion.{equalTo, isNonEmptyString}
 import com.oracle.bmc.auth.SimpleAuthenticationDetailsProvider
-import com.oracle.bmc.auth.CustomerAuthenticationDetailsProvider
 import java.util.UUID
 
 object ObjectStorageSettingsTest extends DefaultRunnableSpec {
