@@ -1,5 +1,5 @@
 lazy val scala_212 = "2.12.13"
-lazy val scala_213 = "2.13.4"
+lazy val scala_213 = "2.13.5"
 
 lazy val V = new {
   val ociSdk = "1.32.1"
@@ -78,9 +78,17 @@ lazy val commonSettings = Seq(
 
 lazy val `zio-oci-objectstorage` = project
   .in(file("."))
+  .settings(commonSettings)
   .settings(
     name := "zio-oci-objectstorage",
     libraryDependencies ++= D.zio ++ D.objectStorage ++ D.zioTest,
     testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework"),
-    addCommandAlias("fmt", "all scalafmtSbt scalafmt test:scalafmt")
+    addCommandAlias("fmtCheck", ";scalafmtCheckAll;scalafmtSbtCheck"),
+    addCommandAlias("fmt", ";test:scalafmtAll;scalafmtAll;scalafmtSbt;test:scalafmtAll"),
+    addCommandAlias("fullTest", ";clean;test"),
+    addCommandAlias(
+      "setReleaseOptions",
+      "set scalacOptions ++= Seq(\"-opt:l:method\", \"-opt:l:inline\", \"-opt-inline-from:laserdisc.**\", \"-opt-inline-from:<sources>\")"
+    ),
+    addCommandAlias("releaseIt", ";clean;setReleaseOptions;session list;compile;ci-release")
   )
