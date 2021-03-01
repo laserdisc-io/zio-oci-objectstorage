@@ -2,9 +2,8 @@ lazy val scala_212 = "2.12.13"
 lazy val scala_213 = "2.13.4"
 
 lazy val V = new {
-  val ociSdk       = "1.32.1"
-  val zio          = "1.0.4-2"
-  val zioInteropRs = "1.3.0.7-2"
+  val ociSdk = "1.32.1"
+  val zio    = "1.0.4-2"
 }
 
 lazy val D = new {
@@ -13,9 +12,8 @@ lazy val D = new {
   )
 
   val zio = Seq(
-    "dev.zio" %% "zio"                         % V.zio,
-    "dev.zio" %% "zio-streams"                 % V.zio,
-    "dev.zio" %% "zio-interop-reactivestreams" % V.zioInteropRs
+    "dev.zio" %% "zio"         % V.zio,
+    "dev.zio" %% "zio-streams" % V.zio
   )
 
   val zioTest = Seq(
