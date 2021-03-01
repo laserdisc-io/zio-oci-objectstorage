@@ -1,0 +1,17 @@
+# Metals + Bloop
+.metals/
+metals.sbt
+.bloop/
+.bsp/
+.vscode/
+
+# Intellij
+.idea
+
+# MacOS
+*.DS_Store
+
+# Anything else
+**/target/
+local.*
+.java-version
