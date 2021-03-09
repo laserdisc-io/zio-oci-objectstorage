@@ -1,7 +1,6 @@
 package zio.oci
 
 import com.oracle.bmc.model.BmcException
-import com.oracle.bmc.objectstorage.responses.ListBucketsResponse
 import zio._
 import zio.stream.{Stream, ZStream}
 import zio.blocking.Blocking
@@ -12,9 +11,12 @@ package object objectstorage {
 
   object ObjectStorage {
     trait Service { self =>
-      def listBuckets(compartmentId: String, namespace: String): IO[BmcException, ListBucketsResponse]
+      def listBuckets(compartmentId: String, namespace: String): IO[BmcException, ObjectStorageBucketListing]
 
-      def listObjects(namespace: String, bucketName: String): IO[BmcException, ObjectStorageObjectListing]
+      def listObjects(namespace: String, bucketName: String): IO[BmcException, ObjectStorageObjectListing] =
+        listObjects(namespace, bucketName, ListObjectsOptions.default)
+
+      def listObjects(namespace: String, bucketName: String, options: ListObjectsOptions): IO[BmcException, ObjectStorageObjectListing]
 
       def getNextObjects(listing: ObjectStorageObjectListing): IO[BmcException, ObjectStorageObjectListing]
 
@@ -31,11 +33,14 @@ package object objectstorage {
   def live(settings: ObjectStorageSettings): Layer[ConnectionError, ObjectStorage] =
     ZLayer.fromManaged(Live.connect(settings))
 
-  def listBuckets(compartmentId: String, namespace: String): ZIO[ObjectStorage, BmcException, ListBucketsResponse] =
+  def listBuckets(compartmentId: String, namespace: String): ZIO[ObjectStorage, BmcException, ObjectStorageBucketListing] =
     ZIO.accessM(_.get.listBuckets(compartmentId, namespace))
 
   def listObjects(namespace: String, bucket: String): ZIO[ObjectStorage, BmcException, ObjectStorageObjectListing] =
     ZIO.accessM(_.get.listObjects(namespace, bucket))
+
+  def listObjects(namespace: String, bucket: String, options: ListObjectsOptions): ZIO[ObjectStorage, BmcException, ObjectStorageObjectListing] =
+    ZIO.accessM(_.get.listObjects(namespace, bucket, options))
 
   def getNextObjects(listing: ObjectStorageObjectListing): ZIO[ObjectStorage, BmcException, ObjectStorageObjectListing] =
     ZIO.accessM(_.get.getNextObjects(listing))
