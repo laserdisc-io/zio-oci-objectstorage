@@ -4,11 +4,16 @@ lazy val scala_213 = "2.13.5"
 lazy val V = new {
   val ociSdk = "1.33.1"
   val zio    = "1.0.5"
+  val scalaCollectionCompat = "2.4.2"
 }
 
 lazy val D = new {
   val objectStorage = Seq(
     "com.oracle.oci.sdk" % "oci-java-sdk-objectstorage" % V.ociSdk
+  )
+
+  val scalaModules = Seq(
+    "org.scala-lang.modules" %% "scala-collection-compat" % V.scalaCollectionCompat
   )
 
   val zio = Seq(
@@ -81,7 +86,7 @@ lazy val `zio-oci-objectstorage` = project
   .settings(commonSettings)
   .settings(
     name := "zio-oci-objectstorage",
-    libraryDependencies ++= D.zio ++ D.objectStorage ++ D.zioTest,
+    libraryDependencies ++= D.zio ++ D.objectStorage ++ D.scalaModules ++ D.zioTest,
     testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework"),
     addCommandAlias("fmtCheck", ";scalafmtCheckAll;scalafmtSbtCheck"),
     addCommandAlias("fmt", ";test:scalafmtAll;scalafmtAll;scalafmtSbt;test:scalafmtAll"),
