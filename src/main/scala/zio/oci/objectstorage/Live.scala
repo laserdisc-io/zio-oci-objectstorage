@@ -13,20 +13,48 @@ import java.util.concurrent.{Future => JFuture}
 import java.io.IOException
 
 final class Live(unsafeClient: ObjectStorageAsyncClient) extends ObjectStorage.Service {
-  override def listBuckets(compartmentId: String, namespace: String): IO[BmcException, ListBucketsResponse] =
-    listBuckets(ListBucketsRequest.builder().compartmentId(compartmentId).namespaceName(namespace).build())
+  override def listBuckets(compartmentId: String, namespace: String): IO[BmcException, ObjectStorageBucketListing] =
+    listBuckets(
+      ListBucketsRequest
+        .builder()
+        .compartmentId(compartmentId)
+        .namespaceName(namespace)
+        .build()
+    ).map(r => ObjectStorageBucketListing.from(compartmentId, namespace, r))
 
   private def listBuckets(request: ListBucketsRequest): IO[BmcException, ListBucketsResponse] =
     execute[ListBucketsRequest, ListBucketsResponse] { c =>
       c.listBuckets(request, _: AsyncHandler[ListBucketsRequest, ListBucketsResponse])
     }
 
-  override def listObjects(namespace: String, bucket: String): IO[BmcException, ListObjectsResponse] =
+  override def listObjects(namespace: String, bucketName: String, options: ListObjectsOptions): IO[BmcException, ObjectStorageObjectListing] =
+    listObjects(
+      ListObjectsRequest
+        .builder()
+        .bucketName(bucketName)
+        .namespaceName(namespace)
+        .prefix(options.prefix.orNull)
+        .limit(options.limit)
+        .build()
+    ).map(r => ObjectStorageObjectListing.from(namespace, bucketName, r))
+
+  private def listObjects(request: ListObjectsRequest): IO[BmcException, ListObjectsResponse] =
     execute[ListObjectsRequest, ListObjectsResponse] { c =>
-      c.listObjects(
-        ListObjectsRequest.builder().bucketName(bucket).namespaceName(namespace).build(),
-        _: AsyncHandler[ListObjectsRequest, ListObjectsResponse]
-      )
+      c.listObjects(request, _: AsyncHandler[ListObjectsRequest, ListObjectsResponse])
+    }
+
+  override def getNextObjects(listing: ObjectStorageObjectListing): IO[BmcException, ObjectStorageObjectListing] =
+    listing.nextStartWith.fold[ZIO[Any, BmcException, ObjectStorageObjectListing]](
+      ZIO.succeed(listing.copy(objectSummaries = Chunk.empty))
+    ) { start =>
+      listObjects(
+        ListObjectsRequest
+          .builder()
+          .namespaceName(listing.namespace)
+          .bucketName(listing.bucketName)
+          .start(start)
+          .build()
+      ).map(r => ObjectStorageObjectListing.from(listing.namespace, listing.bucketName, r))
     }
 
   override def getObject(namespace: String, bucket: String, name: String): ZStream[Blocking, BmcException, Byte] =
