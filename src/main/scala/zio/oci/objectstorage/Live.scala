@@ -34,6 +34,7 @@ final class Live(unsafeClient: ObjectStorageAsyncClient) extends ObjectStorage.S
         .bucketName(bucketName)
         .namespaceName(namespace)
         .prefix(options.prefix.orNull)
+        .start(options.start.orNull)
         .limit(options.limit)
         .build()
     ).map(r => ObjectStorageObjectListing.from(namespace, bucketName, r))
