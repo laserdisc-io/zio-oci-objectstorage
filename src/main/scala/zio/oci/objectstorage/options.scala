@@ -4,6 +4,8 @@ final case class ListObjectsOptions(prefix: Option[String], start: Option[String
 
 object ListObjectsOptions {
   val default: ListObjectsOptions = ListObjectsOptions(None, None, None, Limit.Max)
+
+  def oneAfter(name: String): ListObjectsOptions = ListObjectsOptions(None, None, Some(name), 1)
 }
 
 object Limit {
