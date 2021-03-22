@@ -3,8 +3,9 @@ lazy val scala_213 = "2.13.5"
 
 lazy val V = new {
   val ociSdk                = "1.33.2"
-  val zio                   = "1.0.5"
   val scalaCollectionCompat = "2.4.2"
+  val zio                   = "1.0.5"
+  val `zio-nio`             = "1.0.0-RC10"
 }
 
 lazy val D = new {
@@ -18,6 +19,7 @@ lazy val D = new {
 
   val zio = Seq(
     "dev.zio" %% "zio"         % V.zio,
+    "dev.zio" %% "zio-nio"     % V.`zio-nio`,
     "dev.zio" %% "zio-streams" % V.zio
   )
 

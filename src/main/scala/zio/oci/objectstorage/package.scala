@@ -2,8 +2,9 @@ package zio.oci
 
 import com.oracle.bmc.model.BmcException
 import zio._
-import zio.stream.{Stream, ZStream}
 import zio.blocking.Blocking
+import zio.nio.core.file.Path
+import zio.stream.{Stream, ZStream}
 
 package object objectstorage {
   type ObjectStorage          = Has[ObjectStorage.Service]
@@ -32,6 +33,8 @@ package object objectstorage {
 
   def live(settings: ObjectStorageSettings): Layer[ConnectionError, ObjectStorage] =
     ZLayer.fromManaged(Live.connect(settings))
+
+  def stub(path: Path): ZLayer[Blocking, Any, ObjectStorage] = ZLayer.fromFunction(Test.connect(path))
 
   def listBuckets(compartmentId: String, namespace: String): ZIO[ObjectStorage, BmcException, ObjectStorageBucketListing] =
     ZIO.accessM(_.get.listBuckets(compartmentId, namespace))
