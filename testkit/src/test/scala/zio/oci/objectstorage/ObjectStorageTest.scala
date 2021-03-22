@@ -10,8 +10,10 @@ import zio.test._
 object ObjectStorageTestSpec extends DefaultRunnableSpec {
   private val root = Path("test-data")
 
+  private val testStub: ZLayer[Blocking, Any, ObjectStorage] = ZLayer.fromFunction(Test.connect(root))
+
   private val objectStorage: ZLayer[Blocking, TestFailure[Any], ObjectStorage] =
-    zio.oci.objectstorage.stub(root).mapError(TestFailure.fail)
+    testStub.mapError(TestFailure.fail)
 
   override def spec =
     ObjectStorageSuite.spec.provideCustomLayerShared(Blocking.live >>> objectStorage)

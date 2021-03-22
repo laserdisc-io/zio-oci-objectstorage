@@ -19,9 +19,10 @@ lazy val D = new {
 
   val zio = Seq(
     "dev.zio" %% "zio"         % V.zio,
-    "dev.zio" %% "zio-nio"     % V.`zio-nio`,
     "dev.zio" %% "zio-streams" % V.zio
   )
+
+  val `zio-nio` = "dev.zio" %% "zio-nio" % V.`zio-nio`
 
   val zioTest = Seq(
     "dev.zio" %% "zio-test"     % V.zio,
@@ -84,13 +85,30 @@ lazy val commonSettings = Seq(
   developers += Developer("amir", "Amir Saeid", "amir@glgdgt.com", url("https://github.com/amir"))
 )
 
+lazy val testkit = project
+  .in(file("testkit"))
+  .settings(commonSettings)
+  .settings(
+    name := "zio-oci-objectstorage-testkit",
+    libraryDependencies ++= D.zio ++ D.objectStorage ++ D.zioTest :+ D.`zio-nio`,
+    testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework")
+  )
+  .dependsOn(`zio-oci-objectstorage`)
+
 lazy val `zio-oci-objectstorage` = project
-  .in(file("."))
+  .in(file("core"))
   .settings(commonSettings)
   .settings(
     name := "zio-oci-objectstorage",
     libraryDependencies ++= D.zio ++ D.objectStorage ++ D.scalaModules ++ D.zioTest,
-    testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework"),
+    testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework")
+  )
+
+lazy val root = project
+  .in(file("."))
+  .aggregate(`zio-oci-objectstorage`, testkit)
+  .settings(
+    publish / skip := true,
     addCommandAlias("fmtCheck", ";scalafmtCheckAll;scalafmtSbtCheck"),
     addCommandAlias("fmt", ";test:scalafmtAll;scalafmtAll;scalafmtSbt;test:scalafmtAll"),
     addCommandAlias("fullTest", ";clean;test"),
