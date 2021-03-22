@@ -1,12 +1,11 @@
 package zio.oci.objectstorage
 
-import zio.ZLayer
+import zio.{Chunk, ZLayer}
 import zio.blocking.Blocking
 import zio.nio.core.file.Path
-import zio.test._
-import zio.test.Assertion.{equalTo, hasSameElements}
-import zio.Chunk
 import zio.stream.ZTransducer
+import zio.test.Assertion.{equalTo, hasSameElements}
+import zio.test._
 
 object ObjectStorageTestSpec extends DefaultRunnableSpec {
   private val root = Path("test-data")
