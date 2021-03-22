@@ -2,7 +2,7 @@ package zio.oci.objectstorage
 
 import com.oracle.bmc.model.BmcException
 import com.oracle.bmc.objectstorage.model.{BucketSummary, ObjectSummary}
-import zio.{IO, Task, ZIO, ZManaged}
+import zio.{Chunk, IO, Task, ZIO, ZManaged}
 import zio.blocking.Blocking
 import zio.nio.core.file.Path
 import zio.nio.file.Files
@@ -40,8 +40,26 @@ object Test {
             ObjectSummary.builder().name((path / namespace / bucketName).relativize(f).toString()).size(attr.size()).build()
           }
           .runCollect
-          .map(_.sortBy(_.getName()))
-          .map(os => ObjectStorageObjectListing(namespace, bucketName, os, None))
+          .map(
+            _.sortBy(_.getName())
+              .mapAccum(options.startAfter) {
+                case (Some(startWith), o) =>
+                  if (startWith.startsWith(o.getName()))
+                    None -> Chunk.empty
+                  else
+                    Some(startWith) -> Chunk.empty
+                case (_, o) =>
+                  None -> Chunk(o)
+              }
+              ._2
+              .flatten
+          )
+          .map {
+            case list if list.size > options.limit =>
+              ObjectStorageObjectListing(namespace, bucketName, list.take(options.limit), None)
+            case list =>
+              ObjectStorageObjectListing(namespace, bucketName, list, None)
+          }
           .orDie
           .provide(blocking)
 

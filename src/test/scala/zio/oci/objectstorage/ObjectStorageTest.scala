@@ -35,6 +35,11 @@ object ObjectStorageSuite {
           list <- listObjects(namespace, bucketName)
         } yield assert(list.objectSummaries.map(_.getName()))(hasSameElements(List("Wikipedia/Redis", "LaserDisc")))
       },
+      testM("list objects after") {
+          for {
+              list <- listObjects(namespace, bucketName, ListObjectsOptions(None, None, Some("LaserDisc"), 100))
+          } yield assert(list.objectSummaries.map(_.getName()))(equalTo(Chunk.single("Wikipedia/Redis")))
+      },
       testM("get object") {
         for {
           content <- getObject(namespace, bucketName, "LaserDisc").transduce(ZTransducer.utf8Decode).runCollect
