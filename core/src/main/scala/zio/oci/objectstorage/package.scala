@@ -2,8 +2,8 @@ package zio.oci
 
 import com.oracle.bmc.model.BmcException
 import zio._
-import zio.stream.{Stream, ZStream}
 import zio.blocking.Blocking
+import zio.stream.{Stream, ZStream}
 
 package object objectstorage {
   type ObjectStorage          = Has[ObjectStorage.Service]
