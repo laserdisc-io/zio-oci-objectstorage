@@ -1,7 +1,11 @@
 package zio.oci.objectstorage
 
 import com.oracle.bmc.Region
-import com.oracle.bmc.auth.{BasicAuthenticationDetailsProvider, ConfigFileAuthenticationDetailsProvider}
+import com.oracle.bmc.auth.{
+  BasicAuthenticationDetailsProvider,
+  ConfigFileAuthenticationDetailsProvider,
+  InstancePrincipalsAuthenticationDetailsProvider
+}
 import zio.{IO, UIO, ZIO, ZManaged}
 import zio.blocking.effectBlocking
 
@@ -22,6 +26,9 @@ object ObjectStorageAuth {
 
   def fromConfigFileProfile(profile: String) =
     load(ZManaged.fromEffect(effectBlocking(new ConfigFileAuthenticationDetailsProvider(profile))))(p => IO(p))
+
+  val fromInstancePrincipals =
+    load(ZManaged.fromEffect(effectBlocking(InstancePrincipalsAuthenticationDetailsProvider.builder().build())))(p => IO(p))
 }
 
 final case class ObjectStorageSettings(region: Region, auth: ObjectStorageAuth)
