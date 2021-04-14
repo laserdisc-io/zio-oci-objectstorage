@@ -77,7 +77,6 @@ def versionDependent(scalaVersion: String) =
 
 lazy val commonSettings = Seq(
   organization := "io.laserdisc",
-  sonatypeProfileName := "io.laserdisc",
   scalaVersion := scala_213,
   crossScalaVersions := Seq(scala_212, scala_213),
   scalacOptions ++= versionDependent(scalaVersion.value),
