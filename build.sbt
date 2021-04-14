@@ -108,6 +108,7 @@ lazy val `zio-oci-objectstorage` = project
 lazy val root = project
   .in(file("."))
   .aggregate(`zio-oci-objectstorage`, testkit)
+  .settings(commonSettings)
   .settings(
     publish / skip := true,
     addCommandAlias("fmtCheck", ";scalafmtCheckAll;scalafmtSbtCheck"),
