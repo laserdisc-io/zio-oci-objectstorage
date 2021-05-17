@@ -1,6 +1,7 @@
 package zio.oci
 
 import com.oracle.bmc.model.BmcException
+import com.oracle.bmc.objectstorage.model.ObjectSummary
 import zio._
 import zio.blocking.Blocking
 import zio.stream.{Stream, ZStream}
@@ -17,6 +18,14 @@ package object objectstorage {
         listObjects(namespace, bucketName, ListObjectsOptions.default)
 
       def listObjects(namespace: String, bucketName: String, options: ListObjectsOptions): IO[BmcException, ObjectStorageObjectListing]
+
+      def listAllObjects(namespace: String, bucketName: String): Stream[BmcException, ObjectSummary] =
+        listAllObjects(namespace, bucketName, ListObjectsOptions.default)
+
+      def listAllObjects(namespace: String, bucketName: String, options: ListObjectsOptions): Stream[BmcException, ObjectSummary] =
+        ZStream
+          .fromEffect(self.listObjects(namespace, bucketName, options))
+          .flatMap(paginateObjects(_).mapConcat(_.objectSummaries))
 
       def getNextObjects(listing: ObjectStorageObjectListing): IO[BmcException, ObjectStorageObjectListing]
 
@@ -41,6 +50,11 @@ package object objectstorage {
 
   def listObjects(namespace: String, bucket: String, options: ListObjectsOptions): ZIO[ObjectStorage, BmcException, ObjectStorageObjectListing] =
     ZIO.accessM(_.get.listObjects(namespace, bucket, options))
+
+  def listAllObjects(namespace: String, bucket: String) = ZStream.accessStream[ObjectStorage](_.get.listAllObjects(namespace, bucket))
+
+  def listAllObjects(namespace: String, bucket: String, options: ListObjectsOptions) =
+    ZStream.accessStream[ObjectStorage](_.get.listAllObjects(namespace, bucket, options))
 
   def getNextObjects(listing: ObjectStorageObjectListing): ZIO[ObjectStorage, BmcException, ObjectStorageObjectListing] =
     ZIO.accessM(_.get.getNextObjects(listing))
