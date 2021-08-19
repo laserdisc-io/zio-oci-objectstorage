@@ -76,11 +76,11 @@ def versionDependent(scalaVersion: String) =
   }
 
 lazy val commonSettings = Seq(
-  organization := "io.laserdisc",
-  scalaVersion := scala_213,
+  organization       := "io.laserdisc",
+  scalaVersion       := scala_213,
   crossScalaVersions := Seq(scala_212, scala_213),
   scalacOptions ++= versionDependent(scalaVersion.value),
-  homepage := Some(url("https://github.com/laserdisc-io/zio-oci-objectstorage")),
+  homepage          := Some(url("https://github.com/laserdisc-io/zio-oci-objectstorage")),
   licenses += "MIT" -> url("http://opensource.org/licenses/MIT"),
   developers += Developer("amir", "Amir Saeid", "amir@glgdgt.com", url("https://github.com/amir"))
 )
