@@ -32,7 +32,7 @@ object Test {
       override def listObjects(namespace: String, bucketName: String, options: ListObjectsOptions): IO[BmcException, ObjectStorageObjectListing] =
         Files
           .find(path / namespace / bucketName) { case (p, _) =>
-            options.prefix.fold(true)(p.filename.toString.startsWith)
+            options.prefix.fold(true)(pfx => p.startsWith(path / namespace / bucketName / pfx))
           }
           .mapM(p => Files.readAttributes[PosixFileAttributes](p).map(a => a -> p))
           .filter { case (attr, _) => attr.isRegularFile }
