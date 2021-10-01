@@ -86,6 +86,9 @@ object Live {
     ZManaged
       .fromAutoCloseable(
         Task {
+          // disable sdk's stream auto-close as it's handled by ZStream.fromInputStreamEffect
+          // https://github.com/oracle/oci-java-sdk/blob/c45baca744629cc4c55623ae2a29866ac7728a77/ApacheConnector-README.md#switching-off-auto-close-of-streams
+          com.oracle.bmc.http.internal.ResponseHelper.shouldAutoCloseResponseInputStream(false)
           ObjectStorageAsyncClient.builder().region(settings.region).build(settings.auth.auth)
         }
       )
