@@ -49,7 +49,7 @@ object ObjectStorageSuite {
       testM("getObject") {
         for {
           o <- getObject(namespace, bucketName, "first").transduce(ZTransducer.utf8Decode).runCollect
-        } yield assert(o.size)(Assertion.equalTo(4))
+        } yield assert(o.mkString.length)(Assertion.equalTo(4))
       }
     )
 }
