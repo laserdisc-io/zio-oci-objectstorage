@@ -2,10 +2,12 @@ package zio.oci.objectstorage
 
 import com.oracle.bmc.Region
 import com.oracle.bmc.auth.{SimpleAuthenticationDetailsProvider, StringPrivateKeySupplier}
-import zio.{ZLayer, system}
+import zio.{Chunk, ZLayer, system}
 import zio.blocking.Blocking
-import zio.stream.ZTransducer
+import zio.stream.{ZSink, ZTransducer}
 import zio.test._
+
+import java.security.MessageDigest
 
 object ObjectStorageLiveSpec extends DefaultRunnableSpec {
   val objectStorageSettings = ZLayer
@@ -39,6 +41,13 @@ object ObjectStorageSuite {
   private val namespace  = "idkqeinxdlui"
   private val bucketName = "zio-oci-objectstorage"
 
+  private def md5Digest = ZSink
+    .foldLeftChunks(MessageDigest.getInstance("MD5")) { (digester, chunk: Chunk[Byte]) =>
+      digester.update(chunk.toArray)
+      digester
+    }
+    .map(d => String.format("%032x", new java.math.BigInteger(1, d.digest())))
+
   def spec(label: String): Spec[ObjectStorage with Blocking, TestFailure[Exception], TestSuccess] =
     suite(label)(
       testM("listAllObjects") {
@@ -46,10 +55,15 @@ object ObjectStorageSuite {
           list <- listAllObjects(namespace, bucketName).runCollect
         } yield assert(list.map(_.getName()))(Assertion.hasSameElements(List("first", "second", "third")))
       },
-      testM("getObject") {
+      testM("getObject and compare size") {
         for {
           o <- getObject(namespace, bucketName, "first").transduce(ZTransducer.utf8Decode).runCollect
         } yield assert(o.mkString.length)(Assertion.equalTo(4))
+      },
+      testM("getObject and compare md5 digest") {
+        for {
+          o <- getObject(namespace, bucketName, "second").run(md5Digest)
+        } yield assert(o)(Assertion.equalTo("55c783984393732b474914dbf3881240"))
       }
     )
 }
