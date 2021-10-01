@@ -27,7 +27,7 @@ lazy val D = new {
   val zioTest = Seq(
     "dev.zio" %% "zio-test"     % V.zio,
     "dev.zio" %% "zio-test-sbt" % V.zio
-  ).map(_ % Test)
+  )
 }
 
 lazy val flags = Seq(
@@ -90,17 +90,19 @@ lazy val testkit = project
   .settings(commonSettings)
   .settings(
     name := "zio-oci-objectstorage-testkit",
-    libraryDependencies ++= D.zio ++ D.objectStorage ++ D.zioTest :+ D.`zio-nio`,
+    libraryDependencies ++= D.zio ++ D.objectStorage ++ D.zioTest.map(_ % Test) :+ D.`zio-nio`,
     testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework")
   )
   .dependsOn(`zio-oci-objectstorage`)
 
 lazy val `zio-oci-objectstorage` = project
   .in(file("core"))
+  .configs(IntegrationTest)
   .settings(commonSettings)
+  .settings(Defaults.itSettings)
   .settings(
     name := "zio-oci-objectstorage",
-    libraryDependencies ++= D.zio ++ D.objectStorage ++ D.scalaModules ++ D.zioTest,
+    libraryDependencies ++= D.zio ++ D.objectStorage ++ D.scalaModules ++ D.zioTest.map(_ % "it,test"),
     testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework")
   )
 
@@ -112,7 +114,7 @@ lazy val root = project
     publish / skip := true,
     addCommandAlias("fmtCheck", ";scalafmtCheckAll;scalafmtSbtCheck"),
     addCommandAlias("fmt", ";test:scalafmtAll;scalafmtAll;scalafmtSbt;test:scalafmtAll"),
-    addCommandAlias("fullTest", ";clean;test"),
+    addCommandAlias("fullTest", ";clean;test;IntegrationTest / test"),
     addCommandAlias(
       "setReleaseOptions",
       "set scalacOptions ++= Seq(\"-opt:l:method\", \"-opt:l:inline\", \"-opt-inline-from:laserdisc.**\", \"-opt-inline-from:<sources>\")"
