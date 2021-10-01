@@ -73,7 +73,7 @@ jobs:
         env:
           OCI_USER_ID: ${{ secrets.OCI_USER_ID }}
           OCI_TENANT_ID: ${{ secrets.OCI_TENANT_ID }}
-          OCI_FINGERPRRINT: ${{ secrets.OCI_FINGERPRINT }}
+          OCI_FINGERPRINT: ${{ secrets.OCI_FINGERPRINT }}
           OCI_PRIVATE_KEY : "${{ secrets.OCI_PRIVATE_KEY }}"
   publish_212:
     if: github.event_name == 'push' && github.ref == 'refs/heads/master'
