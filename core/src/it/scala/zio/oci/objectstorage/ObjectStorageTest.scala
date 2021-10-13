@@ -1,7 +1,7 @@
 package zio.oci.objectstorage
 
 import com.oracle.bmc.Region
-import com.oracle.bmc.auth.{SimpleAuthenticationDetailsProvider, StringPrivateKeySupplier}
+import com.oracle.bmc.auth.{SimpleAuthenticationDetailsProvider, SimplePrivateKeySupplier}
 import zio.{Chunk, ZLayer, system}
 import zio.blocking.Blocking
 import zio.stream.{ZSink, ZTransducer}
@@ -24,7 +24,7 @@ object ObjectStorageLiveSpec extends DefaultRunnableSpec {
             .builder()
             .userId(userId)
             .tenantId(tenantId)
-            .privateKeySupplier(new StringPrivateKeySupplier(privateKey))
+            .privateKeySupplier(new SimplePrivateKeySupplier(privateKey))
             .fingerprint(fingerprint)
             .build()
         )
