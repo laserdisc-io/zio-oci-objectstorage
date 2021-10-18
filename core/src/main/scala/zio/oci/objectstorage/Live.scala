@@ -45,7 +45,7 @@ final class Live(unsafeClient: ObjectStorageAsyncClient) extends ObjectStorage.S
       c.listObjects(request, _: AsyncHandler[ListObjectsRequest, ListObjectsResponse])
     }
 
-  override def getNextObjects(listing: ObjectStorageObjectListing): IO[BmcException, ObjectStorageObjectListing] =
+  override def getNextObjects(listing: ObjectStorageObjectListing, options: ListObjectsOptions): IO[BmcException, ObjectStorageObjectListing] =
     listing.nextStartWith.fold[ZIO[Any, BmcException, ObjectStorageObjectListing]](
       ZIO.succeed(listing.copy(objectSummaries = Chunk.empty))
     ) { start =>
@@ -55,6 +55,8 @@ final class Live(unsafeClient: ObjectStorageAsyncClient) extends ObjectStorage.S
           .namespaceName(listing.namespace)
           .bucketName(listing.bucketName)
           .start(start)
+          .prefix(options.prefix.orNull)
+          .limit(options.limit)
           .build()
       ).map(r => ObjectStorageObjectListing.from(listing.namespace, listing.bucketName, r))
     }
