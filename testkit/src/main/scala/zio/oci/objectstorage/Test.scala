@@ -63,7 +63,7 @@ object Test {
           .orDie
           .provide(blocking)
 
-      override def getNextObjects(listing: ObjectStorageObjectListing): IO[BmcException, ObjectStorageObjectListing] =
+      override def getNextObjects(listing: ObjectStorageObjectListing, objects: ListObjectsOptions): IO[BmcException, ObjectStorageObjectListing] =
         listing.nextStartWith match {
           case Some(startWith) if startWith.nonEmpty => listObjects(listing.namespace, listing.bucketName)
           case _                                     => ZIO.dieMessage("Empty startWith is invalid")
