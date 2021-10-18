@@ -25,14 +25,14 @@ package object objectstorage {
       def listAllObjects(namespace: String, bucketName: String, options: ListObjectsOptions): Stream[BmcException, ObjectSummary] =
         ZStream
           .fromEffect(self.listObjects(namespace, bucketName, options))
-          .flatMap(paginateObjects(_).mapConcat(_.objectSummaries))
+          .flatMap(listing => paginateObjects(listing, options).mapConcat(_.objectSummaries))
 
-      def getNextObjects(listing: ObjectStorageObjectListing): IO[BmcException, ObjectStorageObjectListing]
+      def getNextObjects(listing: ObjectStorageObjectListing, options: ListObjectsOptions): IO[BmcException, ObjectStorageObjectListing]
 
-      def paginateObjects(initialListing: ObjectStorageObjectListing): Stream[BmcException, ObjectStorageObjectListing] =
+      def paginateObjects(initialListing: ObjectStorageObjectListing, options: ListObjectsOptions): Stream[BmcException, ObjectStorageObjectListing] =
         ZStream.paginateM(initialListing) {
           case current @ ObjectStorageObjectListing(_, _, _, None) => ZIO.succeed(current -> None)
-          case current                                             => self.getNextObjects(current).map(next => current -> Some(next))
+          case current                                             => self.getNextObjects(current, options).map(next => current -> Some(next))
         }
 
       def getObject(namespace: String, bucketName: String, name: String): ZStream[Blocking, BmcException, Byte]
@@ -56,12 +56,12 @@ package object objectstorage {
   def listAllObjects(namespace: String, bucket: String, options: ListObjectsOptions) =
     ZStream.accessStream[ObjectStorage](_.get.listAllObjects(namespace, bucket, options))
 
-  def getNextObjects(listing: ObjectStorageObjectListing): ZIO[ObjectStorage, BmcException, ObjectStorageObjectListing] =
-    ZIO.accessM(_.get.getNextObjects(listing))
+  def getNextObjects(listing: ObjectStorageObjectListing, options: ListObjectsOptions): ZIO[ObjectStorage, BmcException, ObjectStorageObjectListing] =
+    ZIO.accessM(_.get.getNextObjects(listing, options))
 
   def getObject(namespace: String, bucket: String, name: String): ZStream[ObjectStorage with Blocking, BmcException, Byte] =
     ZStream.accessStream(_.get.getObject(namespace, bucket, name))
 
-  def paginateObjects(initialListing: ObjectStorageObjectListing): ObjectStorageStream[ObjectStorageObjectListing] =
-    ZStream.accessStream[ObjectStorage](_.get.paginateObjects(initialListing))
+  def paginateObjects(initialListing: ObjectStorageObjectListing, options: ListObjectsOptions): ObjectStorageStream[ObjectStorageObjectListing] =
+    ZStream.accessStream[ObjectStorage](_.get.paginateObjects(initialListing, options))
 }

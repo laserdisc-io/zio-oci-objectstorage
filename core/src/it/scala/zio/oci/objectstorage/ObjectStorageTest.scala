@@ -55,6 +55,11 @@ object ObjectStorageSuite {
           list <- listAllObjects(namespace, bucketName).runCollect
         } yield assert(list.map(_.getName()))(Assertion.hasSameElements(List("first", "second", "third")))
       },
+      testM("listAllObjects with prefix") {
+        for {
+          list <- listAllObjects(namespace, bucketName, ListObjectsOptions(Some("f"), None, None, 1)).runCollect
+        } yield assert(list.lastOption.map(_.getName()))(Assertion.equalTo(Some("first")))
+      },
       testM("getObject and compare size") {
         for {
           o <- getObject(namespace, bucketName, "first").transduce(ZTransducer.utf8Decode).runCollect
