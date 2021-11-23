@@ -41,6 +41,9 @@ trait ObjectStorage { self =>
     }
 
   def getObject(namespace: String, bucketName: String, name: String, maybeRange: Option[Range]): ZStream[Blocking, BmcException, Byte]
+
+  final def getObject(namespace: String, bucketName: String, name: String): ZStream[Blocking, BmcException, Byte] =
+    getObject(namespace, bucketName, name, None)
 }
 
 final class Live(unsafeClient: ObjectStorageAsyncClient) extends ObjectStorage {
