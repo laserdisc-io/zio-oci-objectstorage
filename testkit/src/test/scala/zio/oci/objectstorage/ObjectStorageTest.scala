@@ -43,7 +43,7 @@ object ObjectStorageSuite {
       },
       testM("get object no Range") {
         for {
-          content <- getObject(namespace, bucketName, "LaserDisc", None).transduce(ZTransducer.utf8Decode).runCollect
+          content <- getObject(namespace, bucketName, "LaserDisc").transduce(ZTransducer.utf8Decode).runCollect
         } yield assert(content.mkString)(equalTo("LaserDiscs were invented in 1978 (same year I was born) and were so cool"))
       },
       testM("get object Range.Exact") {

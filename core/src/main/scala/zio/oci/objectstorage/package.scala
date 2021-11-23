@@ -34,6 +34,13 @@ package object objectstorage {
   def getObject(
       namespace: String,
       bucket: String,
+      name: String
+  ): ZStream[Has[ObjectStorage] with Blocking, BmcException, Byte] =
+    ZStream.accessStream(_.get.getObject(namespace, bucket, name))
+
+  def getObject(
+      namespace: String,
+      bucket: String,
       name: String,
       maybeRange: Option[Range]
   ): ZStream[Has[ObjectStorage] with Blocking, BmcException, Byte] =

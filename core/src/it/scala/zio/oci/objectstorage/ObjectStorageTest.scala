@@ -62,12 +62,12 @@ object ObjectStorageSuite {
       },
       testM("getObject and compare size") {
         for {
-          o <- getObject(namespace, bucketName, "first", None).transduce(ZTransducer.utf8Decode).runCollect
+          o <- getObject(namespace, bucketName, "first").transduce(ZTransducer.utf8Decode).runCollect
         } yield assert(o.mkString.length)(Assertion.equalTo(4))
       },
       testM("getObject and compare md5 digest") {
         for {
-          o <- getObject(namespace, bucketName, "second", None).run(md5Digest)
+          o <- getObject(namespace, bucketName, "second").run(md5Digest)
         } yield assert(o)(Assertion.equalTo("55c783984393732b474914dbf3881240"))
       }
       //TODO add test for range
