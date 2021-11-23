@@ -8,15 +8,24 @@ import zio.nio.core.file.Path
 import zio.nio.file.Files
 import zio.stream.ZStream
 
-import java.io.{FileInputStream, FileNotFoundException}
+import java.io.{FileInputStream, FileNotFoundException, InputStream}
 import java.nio.file.attribute.PosixFileAttributes
+import java.io.IOException
 
 object Test {
   private def fileNotFound(err: FileNotFoundException): BmcException =
     new BmcException(404, "ObjectNotFound", "Object not found", "00000000-0000-0000-0000-000000000000", err)
+  private def streamFrom(is: InputStream, maybeRange: Option[Range]): ZStream[Blocking, IOException, Byte] = {
+    val stream = ZStream.fromInputStream(is, 2048)
+    maybeRange.fold(stream) {
+      case Range.Exact(from, to) => stream.drop(from).take(to - from)
+      case Range.From(byte)      => stream.drop(byte)
+      case Range.Last(bytes)     => stream.takeRight(bytes)
+    }
+  }
 
-  def connect(path: Path): Blocking => ObjectStorage.Service = { blocking =>
-    new ObjectStorage.Service {
+  def connect(path: Path): Blocking => ObjectStorage = { blocking =>
+    new ObjectStorage {
       override def listBuckets(compartmentId: String, namespace: String): IO[BmcException, ObjectStorageBucketListing] =
         Files
           .list(path / namespace)
@@ -69,10 +78,10 @@ object Test {
           case _                                     => ZIO.dieMessage("Empty startWith is invalid")
         }
 
-      override def getObject(namespace: String, bucketName: String, name: String): ZStream[Blocking, BmcException, Byte] =
+      override def getObject(namespace: String, bucketName: String, name: String, maybeRange: Option[Range]): ZStream[Blocking, BmcException, Byte] =
         ZStream
           .managed(ZManaged.fromAutoCloseable(Task(new FileInputStream((path / namespace / bucketName / name).toFile))))
-          .flatMap(ZStream.fromInputStream(_, 2048))
+          .flatMap(streamFrom(_, maybeRange))
           .refineOrDie { case e: FileNotFoundException =>
             fileNotFound(e)
           }

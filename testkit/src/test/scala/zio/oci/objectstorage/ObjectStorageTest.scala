@@ -1,6 +1,6 @@
 package zio.oci.objectstorage
 
-import zio.{Chunk, ZLayer}
+import zio.{Chunk, Has, ZLayer}
 import zio.blocking.Blocking
 import zio.nio.core.file.Path
 import zio.stream.ZTransducer
@@ -10,9 +10,9 @@ import zio.test._
 object ObjectStorageTestSpec extends DefaultRunnableSpec {
   private val root = Path("test-data")
 
-  private val testStub: ZLayer[Blocking, Any, ObjectStorage] = ZLayer.fromFunction(Test.connect(root))
+  private val testStub: ZLayer[Blocking, Any, Has[ObjectStorage]] = ZLayer.fromFunction(Test.connect(root))
 
-  private val objectStorage: ZLayer[Blocking, TestFailure[Any], ObjectStorage] =
+  private val objectStorage: ZLayer[Blocking, TestFailure[Any], Has[ObjectStorage]] =
     testStub.mapError(TestFailure.fail)
 
   override def spec =
@@ -24,7 +24,7 @@ object ObjectStorageSuite {
   val namespace     = "namespace"
   val bucketName    = "bucket"
 
-  def spec: Spec[ObjectStorage with Blocking, TestFailure[Exception], TestSuccess] =
+  def spec: Spec[Has[ObjectStorage] with Blocking, TestFailure[Exception], TestSuccess] =
     suite("ObjectStorageTestSpec")(
       testM("list buckets") {
         for {
@@ -41,10 +41,25 @@ object ObjectStorageSuite {
           list <- listObjects(namespace, bucketName, ListObjectsOptions(None, None, Some("LaserDisc"), 100))
         } yield assert(list.objectSummaries.map(_.getName()))(equalTo(Chunk.single("Wikipedia/Redis")))
       },
-      testM("get object") {
+      testM("get object no Range") {
         for {
-          content <- getObject(namespace, bucketName, "LaserDisc").transduce(ZTransducer.utf8Decode).runCollect
+          content <- getObject(namespace, bucketName, "LaserDisc", None).transduce(ZTransducer.utf8Decode).runCollect
         } yield assert(content.mkString)(equalTo("LaserDiscs were invented in 1978 (same year I was born) and were so cool"))
+      },
+      testM("get object Range.Exact") {
+        for {
+          content <- getObject(namespace, bucketName, "LaserDisc", Some(Range.Exact(2, 5))).transduce(ZTransducer.utf8Decode).runCollect
+        } yield assert(content.mkString)(equalTo("ser"))
+      },
+      testM("get object Range.From") {
+        for {
+          content <- getObject(namespace, bucketName, "LaserDisc", Some(Range.From(28))).transduce(ZTransducer.utf8Decode).runCollect
+        } yield assert(content.mkString)(equalTo("1978 (same year I was born) and were so cool"))
+      },
+      testM("get object Range.Last") {
+        for {
+          content <- getObject(namespace, bucketName, "LaserDisc", Some(Range.Last(7))).transduce(ZTransducer.utf8Decode).runCollect
+        } yield assert(content.mkString)(equalTo("so cool"))
       }
     )
 }

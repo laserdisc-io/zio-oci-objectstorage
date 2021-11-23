@@ -6,16 +6,16 @@ import com.oracle.bmc.auth.{
   ConfigFileAuthenticationDetailsProvider,
   InstancePrincipalsAuthenticationDetailsProvider
 }
-import zio.{IO, UIO, ZIO, ZManaged}
+import zio._
 import zio.blocking.effectBlocking
 
 final case class ObjectStorageAuth(auth: BasicAuthenticationDetailsProvider)
 
 object ObjectStorageAuth {
   private[this] def load[R](
-      provider: ZManaged[R, Throwable, BasicAuthenticationDetailsProvider]
+      provider: RManaged[R, BasicAuthenticationDetailsProvider]
   )(
-      f: BasicAuthenticationDetailsProvider => ZIO[R, Throwable, BasicAuthenticationDetailsProvider]
+      f: BasicAuthenticationDetailsProvider => RIO[R, BasicAuthenticationDetailsProvider]
   ): ZIO[R, InvalidAuthDetails, ObjectStorageAuth] =
     provider.use(f).map(ObjectStorageAuth.apply).mapError(e => InvalidAuthDetails(e.getMessage()))
 
@@ -25,10 +25,10 @@ object ObjectStorageAuth {
   val fromConfigFileDefaultProfile = fromConfigFileProfile("DEFAULT")
 
   def fromConfigFileProfile(profile: String) =
-    load(ZManaged.fromEffect(effectBlocking(new ConfigFileAuthenticationDetailsProvider(profile))))(p => IO(p))
+    load(Managed.fromEffect(effectBlocking(new ConfigFileAuthenticationDetailsProvider(profile))))(p => IO(p))
 
   val fromInstancePrincipals =
-    load(ZManaged.fromEffect(effectBlocking(InstancePrincipalsAuthenticationDetailsProvider.builder().build())))(p => IO(p))
+    load(Managed.fromEffect(effectBlocking(InstancePrincipalsAuthenticationDetailsProvider.builder().build())))(p => IO(p))
 }
 
 final case class ObjectStorageSettings(region: Region, auth: ObjectStorageAuth)

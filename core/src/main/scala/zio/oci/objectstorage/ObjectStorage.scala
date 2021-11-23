@@ -2,17 +2,48 @@ package zio.oci.objectstorage
 
 import com.oracle.bmc.model.BmcException
 import com.oracle.bmc.objectstorage.ObjectStorageAsyncClient
+import com.oracle.bmc.objectstorage.model.ObjectSummary
 import com.oracle.bmc.objectstorage.responses.{GetObjectResponse, ListBucketsResponse, ListObjectsResponse}
 import com.oracle.bmc.objectstorage.requests.{GetObjectRequest, ListBucketsRequest, ListObjectsRequest}
 import com.oracle.bmc.responses.AsyncHandler
 import zio._
 import zio.blocking.Blocking
-import zio.stream.ZStream
+import zio.stream.{Stream, ZStream}
 
 import java.util.concurrent.{Future => JFuture}
 import java.io.IOException
 
-final class Live(unsafeClient: ObjectStorageAsyncClient) extends ObjectStorage.Service {
+trait ObjectStorage { self =>
+  def listBuckets(compartmentId: String, namespace: String): IO[BmcException, ObjectStorageBucketListing]
+
+  final def listObjects(namespace: String, bucketName: String): IO[BmcException, ObjectStorageObjectListing] =
+    listObjects(namespace, bucketName, ListObjectsOptions.default)
+
+  def listObjects(namespace: String, bucketName: String, options: ListObjectsOptions): IO[BmcException, ObjectStorageObjectListing]
+
+  final def listAllObjects(namespace: String, bucketName: String): Stream[BmcException, ObjectSummary] =
+    listAllObjects(namespace, bucketName, ListObjectsOptions.default)
+
+  final def listAllObjects(namespace: String, bucketName: String, options: ListObjectsOptions): Stream[BmcException, ObjectSummary] =
+    ZStream
+      .fromEffect(self.listObjects(namespace, bucketName, options))
+      .flatMap(listing => paginateObjects(listing, options).mapConcat(_.objectSummaries))
+
+  def getNextObjects(listing: ObjectStorageObjectListing, options: ListObjectsOptions): IO[BmcException, ObjectStorageObjectListing]
+
+  final def paginateObjects(
+      initialListing: ObjectStorageObjectListing,
+      options: ListObjectsOptions
+  ): Stream[BmcException, ObjectStorageObjectListing] =
+    ZStream.paginateM(initialListing) {
+      case current @ ObjectStorageObjectListing(_, _, _, None) => ZIO.succeed(current -> None)
+      case current                                             => self.getNextObjects(current, options).map(next => current -> Some(next))
+    }
+
+  def getObject(namespace: String, bucketName: String, name: String, maybeRange: Option[Range]): ZStream[Blocking, BmcException, Byte]
+}
+
+final class Live(unsafeClient: ObjectStorageAsyncClient) extends ObjectStorage {
   override def listBuckets(compartmentId: String, namespace: String): IO[BmcException, ObjectStorageBucketListing] =
     listBuckets(
       ListBucketsRequest
@@ -61,11 +92,11 @@ final class Live(unsafeClient: ObjectStorageAsyncClient) extends ObjectStorage.S
       ).map(r => ObjectStorageObjectListing.from(listing.namespace, listing.bucketName, r))
     }
 
-  override def getObject(namespace: String, bucket: String, name: String): ZStream[Blocking, BmcException, Byte] =
+  override def getObject(namespace: String, bucket: String, name: String, maybeRange: Option[Range]): ZStream[Blocking, BmcException, Byte] =
     ZStream
       .fromEffect(execute[GetObjectRequest, GetObjectResponse] { c =>
         c.getObject(
-          GetObjectRequest.builder().namespaceName(namespace).bucketName(bucket).objectName(name).build(),
+          GetObjectRequest.builder().namespaceName(namespace).bucketName(bucket).objectName(name).range(maybeRange.map(_.asOCI).orNull).build(),
           _: AsyncHandler[GetObjectRequest, GetObjectResponse]
         )
       })

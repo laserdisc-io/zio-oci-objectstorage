@@ -2,7 +2,7 @@ package zio.oci.objectstorage
 
 import com.oracle.bmc.Region
 import com.oracle.bmc.auth.{SimpleAuthenticationDetailsProvider, SimplePrivateKeySupplier}
-import zio.{Chunk, ZLayer, system}
+import zio.{Chunk, Has, ZLayer, system}
 import zio.blocking.Blocking
 import zio.stream.{ZSink, ZTransducer}
 import zio.test._
@@ -48,7 +48,7 @@ object ObjectStorageSuite {
     }
     .map(d => String.format("%032x", new java.math.BigInteger(1, d.digest())))
 
-  def spec(label: String): Spec[ObjectStorage with Blocking, TestFailure[Exception], TestSuccess] =
+  def spec(label: String): Spec[Has[ObjectStorage] with Blocking, TestFailure[Exception], TestSuccess] =
     suite(label)(
       testM("listAllObjects") {
         for {
@@ -62,13 +62,14 @@ object ObjectStorageSuite {
       },
       testM("getObject and compare size") {
         for {
-          o <- getObject(namespace, bucketName, "first").transduce(ZTransducer.utf8Decode).runCollect
+          o <- getObject(namespace, bucketName, "first", None).transduce(ZTransducer.utf8Decode).runCollect
         } yield assert(o.mkString.length)(Assertion.equalTo(4))
       },
       testM("getObject and compare md5 digest") {
         for {
-          o <- getObject(namespace, bucketName, "second").run(md5Digest)
+          o <- getObject(namespace, bucketName, "second", None).run(md5Digest)
         } yield assert(o)(Assertion.equalTo("55c783984393732b474914dbf3881240"))
       }
+      //TODO add test for range
     )
 }
