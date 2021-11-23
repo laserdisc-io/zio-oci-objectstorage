@@ -1,6 +1,6 @@
 name: CI
 on:
-  pull_request:
+  pull_request_target:
     branches:
       - '*'
   push:
@@ -68,15 +68,17 @@ jobs:
             target
             project/target
           key: ${{ runner.os }}-cache-v2-${{ hashFiles('**/*.sbt') }}-${{ hashFiles('project/build.properties') }}
+      - name: Set up OCI key
+        run: echo $OCI_PRIVATE_KEY_BASE64 | base64 -d > $OCI_PRIVATE_KEY
+        env:
+          OCI_PRIVATE_KEY_BASE64: ${{ secrets.OCI_PRIVATE_KEY_BASE64 }}
+          OCI_PRIVATE_KEY: /tmp/oci_key.pem
       - name: Test (${{ matrix.scala }}, ${{ matrix.java }})
-        run: |
-          echo $OCI_PRIVATE_KEY_BASE64 | base64 -d > $OCI_PRIVATE_KEY
-          sbt ++${{ matrix.scala }} fullTest
+        run: sbt ++${{ matrix.scala }} fullTest
         env:
           OCI_USER_ID: ${{ secrets.OCI_USER_ID }}
           OCI_TENANT_ID: ${{ secrets.OCI_TENANT_ID }}
           OCI_FINGERPRINT: ${{ secrets.OCI_FINGERPRINT }}
-          OCI_PRIVATE_KEY_BASE64: ${{ secrets.OCI_PRIVATE_KEY_BASE64 }}
           OCI_PRIVATE_KEY: /tmp/oci_key.pem
   publish_212:
     if: github.event_name == 'push' && github.ref == 'refs/heads/master'
