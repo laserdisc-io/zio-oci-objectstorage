@@ -8,9 +8,8 @@ import zio.nio.core.file.Path
 import zio.nio.file.Files
 import zio.stream.ZStream
 
-import java.io.{FileInputStream, FileNotFoundException, InputStream}
+import java.io.{FileInputStream, FileNotFoundException, InputStream, IOException}
 import java.nio.file.attribute.PosixFileAttributes
-import java.io.IOException
 
 object Test {
   private def fileNotFound(err: FileNotFoundException): BmcException =
