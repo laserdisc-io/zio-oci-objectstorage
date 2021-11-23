@@ -8,7 +8,7 @@ import zio.nio.core.file.Path
 import zio.nio.file.Files
 import zio.stream.ZStream
 
-import java.io.{FileInputStream, FileNotFoundException, InputStream, IOException}
+import java.io.{FileInputStream, FileNotFoundException, IOException, InputStream}
 import java.nio.file.attribute.PosixFileAttributes
 
 object Test {
