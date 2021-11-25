@@ -14,8 +14,8 @@ jobs:
       matrix:
         scala: [2.12.15, 2.13.6]
         java:
-          - adoptium@11
-          - adoptium@17
+          - adopt@1.11
+          - adopt@1.15
         os: [ubuntu-latest]
     runs-on: ${{ matrix.os }}
     steps:
