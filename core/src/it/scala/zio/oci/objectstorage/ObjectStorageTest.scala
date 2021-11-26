@@ -70,6 +70,6 @@ object ObjectStorageSuite {
           o <- getObject(namespace, bucketName, "second").run(md5Digest)
         } yield assert(o)(Assertion.equalTo("55c783984393732b474914dbf3881240"))
       }
-      //TODO add test for range
+      // TODO add test for range
     )
 }
