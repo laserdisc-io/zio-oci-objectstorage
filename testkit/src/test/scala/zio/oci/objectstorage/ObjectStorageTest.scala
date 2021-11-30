@@ -48,17 +48,20 @@ object ObjectStorageSuite {
       },
       testM("get object Range.Exact") {
         for {
-          content <- getObject(namespace, bucketName, "LaserDisc", Some(Range.Exact(2, 5))).transduce(ZTransducer.utf8Decode).runCollect
+          content <- getObject(namespace, bucketName, "LaserDisc", Some(Range.Exact(2, 5)))
+            .flatMap(_.byteStream.transduce(ZTransducer.utf8Decode).runCollect)
         } yield assert(content.mkString)(equalTo("ser"))
       },
       testM("get object Range.From") {
         for {
-          content <- getObject(namespace, bucketName, "LaserDisc", Some(Range.From(28))).transduce(ZTransducer.utf8Decode).runCollect
+          content <- getObject(namespace, bucketName, "LaserDisc", Some(Range.From(28)))
+            .flatMap(_.byteStream.transduce(ZTransducer.utf8Decode).runCollect)
         } yield assert(content.mkString)(equalTo("1978 (same year I was born) and were so cool"))
       },
       testM("get object Range.Last") {
         for {
-          content <- getObject(namespace, bucketName, "LaserDisc", Some(Range.Last(7))).transduce(ZTransducer.utf8Decode).runCollect
+          content <- getObject(namespace, bucketName, "LaserDisc", Some(Range.Last(7)))
+            .flatMap(_.byteStream.transduce(ZTransducer.utf8Decode).runCollect)
         } yield assert(content.mkString)(equalTo("so cool"))
       }
     )

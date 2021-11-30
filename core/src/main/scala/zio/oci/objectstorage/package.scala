@@ -43,8 +43,8 @@ package object objectstorage {
       bucket: String,
       name: String,
       maybeRange: Option[Range]
-  ): ZStream[Has[ObjectStorage] with Blocking, BmcException, Byte] =
-    ZStream.accessStream(_.get.getObject(namespace, bucket, name, maybeRange))
+  ): ZIO[Has[ObjectStorage], BmcException, ObjectStorageObjectContent] =
+    ZIO.accessM(_.get.getObject(namespace, bucket, name, maybeRange))
 
   def paginateObjects(initialListing: ObjectStorageObjectListing, options: ListObjectsOptions): ObjectStorageStream[ObjectStorageObjectListing] =
     ZStream.accessStream[Has[ObjectStorage]](_.get.paginateObjects(initialListing, options))

@@ -11,7 +11,6 @@ import zio.blocking.Blocking
 import zio.stream.{Stream, ZStream}
 
 import java.util.concurrent.{Future => JFuture}
-import java.io.IOException
 
 trait ObjectStorage { self =>
   def listBuckets(compartmentId: String, namespace: String): IO[BmcException, ObjectStorageBucketListing]
@@ -40,10 +39,11 @@ trait ObjectStorage { self =>
       case current                                             => self.getNextObjects(current, options).map(next => current -> Some(next))
     }
 
-  def getObject(namespace: String, bucketName: String, name: String, maybeRange: Option[Range]): ZStream[Blocking, BmcException, Byte]
+  def getObject(namespace: String, bucket: String, name: String, maybeRange: Option[Range]): IO[BmcException, ObjectStorageObjectContent]
 
+  // This is to preserve current semantics, may not be worth keeping around though
   final def getObject(namespace: String, bucketName: String, name: String): ZStream[Blocking, BmcException, Byte] =
-    getObject(namespace, bucketName, name, None)
+    ZStream.fromEffect(getObject(namespace, bucketName, name, None)).flatMap(_.byteStream).refineToOrDie[BmcException]
 }
 
 final class Live(unsafeClient: ObjectStorageAsyncClient) extends ObjectStorage {
@@ -95,16 +95,14 @@ final class Live(unsafeClient: ObjectStorageAsyncClient) extends ObjectStorage {
       ).map(r => ObjectStorageObjectListing.from(listing.namespace, listing.bucketName, r))
     }
 
-  override def getObject(namespace: String, bucket: String, name: String, maybeRange: Option[Range]): ZStream[Blocking, BmcException, Byte] =
-    ZStream
-      .fromEffect(execute[GetObjectRequest, GetObjectResponse] { c =>
-        c.getObject(
-          GetObjectRequest.builder().namespaceName(namespace).bucketName(bucket).objectName(name).range(maybeRange.map(_.asOCI).orNull).build(),
-          _: AsyncHandler[GetObjectRequest, GetObjectResponse]
-        )
-      })
-      .flatMap(is => ZStream.fromInputStreamEffect(IO(is.getInputStream()).refineToOrDie[IOException]))
-      .refineToOrDie[BmcException]
+  override def getObject(namespace: String, bucket: String, name: String, maybeRange: Option[Range]): IO[BmcException, ObjectStorageObjectContent] =
+    getObject(GetObjectRequest.builder().namespaceName(namespace).bucketName(bucket).objectName(name).range(maybeRange.map(_.asOCI).orNull).build())
+      .map(ObjectStorageObjectContent.from)
+
+  private def getObject(request: GetObjectRequest): IO[BmcException, GetObjectResponse] =
+    execute[GetObjectRequest, GetObjectResponse] { c =>
+      c.getObject(request, _: AsyncHandler[GetObjectRequest, GetObjectResponse])
+    }
 
   def execute[I, O](f: ObjectStorageAsyncClient => Function1[AsyncHandler[I, O], JFuture[O]]): IO[BmcException, O] =
     IO.effectAsync[BmcException, O] { cb =>

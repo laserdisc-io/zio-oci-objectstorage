@@ -8,14 +8,14 @@ import zio.nio.core.file.Path
 import zio.nio.file.Files
 import zio.stream.ZStream
 
-import java.io.{FileInputStream, FileNotFoundException, IOException, InputStream}
+import java.io.{File, FileInputStream, FileNotFoundException, IOException}
 import java.nio.file.attribute.PosixFileAttributes
 
 object Test {
-  private def fileNotFound(err: FileNotFoundException): BmcException =
-    new BmcException(404, "ObjectNotFound", "Object not found", "00000000-0000-0000-0000-000000000000", err)
-  private def streamFrom(is: InputStream, maybeRange: Option[Range]): ZStream[Blocking, IOException, Byte] = {
-    val stream = ZStream.fromInputStream(is, 2048)
+  private def fileNotFound(err: String): BmcException =
+    new BmcException(404, "ObjectNotFound", "Object not found", "00000000-0000-0000-0000-000000000000", new FileNotFoundException(err))
+  private def streamFrom(f: File, maybeRange: Option[Range]): ZStream[Blocking, IOException, Byte] = {
+    val stream = ZStream.fromInputStreamManaged(ZManaged.fromAutoCloseable(Task(new FileInputStream(f)).refineToOrDie[IOException]), 2048)
     maybeRange.fold(stream) {
       case Range.Exact(from, to) => stream.drop(from).take(to - from)
       case Range.From(byte)      => stream.drop(byte)
@@ -77,14 +77,16 @@ object Test {
           case _                                     => ZIO.dieMessage("Empty startWith is invalid")
         }
 
-      override def getObject(namespace: String, bucketName: String, name: String, maybeRange: Option[Range]): ZStream[Blocking, BmcException, Byte] =
-        ZStream
-          .managed(ZManaged.fromAutoCloseable(Task(new FileInputStream((path / namespace / bucketName / name).toFile))))
-          .flatMap(streamFrom(_, maybeRange))
-          .refineOrDie { case e: FileNotFoundException =>
-            fileNotFound(e)
-          }
-          .provide(blocking)
+      override def getObject(
+          namespace: String,
+          bucketName: String,
+          name: String,
+          maybeRange: Option[Range]
+      ): IO[BmcException, ObjectStorageObjectContent] =
+        IO.succeed((path / namespace / bucketName / name).toFile).flatMap {
+          case f if !(f.exists && f.canRead) => IO.fail(fileNotFound(s"cannot find file ${f.getAbsolutePath()}"))
+          case f                             => IO.succeed(ObjectStorageObjectContent(f.length(), streamFrom(f, maybeRange)))
+        }
     }
   }
 }
