@@ -38,7 +38,7 @@ object ObjectStorageSuite {
       },
       testM("list objects after") {
         for {
-          list <- listObjects(namespace, bucketName, ListObjectsOptions(None, None, Some("LaserDisc"), 100))
+          list <- listObjects(namespace, bucketName, ListObjectsOptions(None, None, Some("LaserDisc"), 100, Set(ListObjectsOptions.Field.Name)))
         } yield assert(list.objectSummaries.map(_.getName()))(equalTo(Chunk.single("Wikipedia/Redis")))
       },
       testM("get object") {

@@ -57,8 +57,17 @@ object ObjectStorageSuite {
       },
       testM("listAllObjects with prefix") {
         for {
-          list <- listAllObjects(namespace, bucketName, ListObjectsOptions(Some("f"), None, None, 1)).runCollect
+          list <- listAllObjects(namespace, bucketName, ListObjectsOptions(Some("f"), None, None, 1, Set(ListObjectsOptions.Field.Name))).runCollect
         } yield assert(list.lastOption.map(_.getName()))(Assertion.equalTo(Some("first")))
+      },
+      testM("listAllObjects with prefix and size") {
+        for {
+          list <- listAllObjects(
+            namespace,
+            bucketName,
+            ListObjectsOptions(Some("s"), None, None, 1, Set(ListObjectsOptions.Field.Name, ListObjectsOptions.Field.Size))
+          ).runCollect
+        } yield assert(list.lastOption.map(_.getSize().toLong))(Assertion.equalTo(Option(10000000L)))
       },
       testM("getObject and compare size") {
         for {
