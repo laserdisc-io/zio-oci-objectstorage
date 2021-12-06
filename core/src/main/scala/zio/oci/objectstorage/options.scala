@@ -25,6 +25,14 @@ object ListObjectsOptions {
   def oneAfter(name: String): ListObjectsOptions = ListObjectsOptions(None, None, Some(name), 1, Set(Field.Name, Field.Size))
 }
 
+final case class GetObjectOptions(range: Option[GetObjectOptions.Range])
+
+object GetObjectOptions {
+  final case class Range(startByte: Option[Long], endByte: Option[Long])
+
+  val default: GetObjectOptions = GetObjectOptions(None)
+}
+
 object Limit {
   val Max: Int = 1000
 }
