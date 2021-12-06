@@ -37,6 +37,7 @@ final class Live(unsafeClient: ObjectStorageAsyncClient) extends ObjectStorage.S
         .start(options.start.orNull)
         .startAfter(options.startAfter.orNull)
         .limit(options.limit)
+        .fields(options.fields.map(_.value).mkString(","))
         .build()
     ).map(r => ObjectStorageObjectListing.from(namespace, bucketName, r))
 
@@ -57,6 +58,7 @@ final class Live(unsafeClient: ObjectStorageAsyncClient) extends ObjectStorage.S
           .start(start)
           .prefix(options.prefix.orNull)
           .limit(options.limit)
+          .fields(options.fields.map(_.value).mkString(","))
           .build()
       ).map(r => ObjectStorageObjectListing.from(listing.namespace, listing.bucketName, r))
     }
