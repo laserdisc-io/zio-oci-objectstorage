@@ -69,7 +69,7 @@ object Test {
           case _                                     => ZIO.dieMessage("Empty startWith is invalid")
         }
 
-      override def getObject(namespace: String, bucketName: String, name: String): ZStream[Blocking, BmcException, Byte] =
+      override def getObject(namespace: String, bucketName: String, name: String, options: GetObjectOptions): ZStream[Blocking, BmcException, Byte] =
         ZStream
           .managed(ZManaged.fromAutoCloseable(Task(new FileInputStream((path / namespace / bucketName / name).toFile))))
           .flatMap(ZStream.fromInputStream(_, 2048))

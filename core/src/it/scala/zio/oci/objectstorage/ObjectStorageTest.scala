@@ -78,6 +78,11 @@ object ObjectStorageSuite {
         for {
           o <- getObject(namespace, bucketName, "second").run(md5Digest)
         } yield assert(o)(Assertion.equalTo("55c783984393732b474914dbf3881240"))
+      },
+      testM("getObject by range") {
+        for {
+          o <- getObject(namespace, bucketName, "second", GetObjectOptions(Some(GetObjectOptions.Range(Some(9999000), None)))).runCollect
+        } yield assert(o.size)(Assertion.equalTo(1000))
       }
     )
 }

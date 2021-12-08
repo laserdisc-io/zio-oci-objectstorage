@@ -63,16 +63,24 @@ final class Live(unsafeClient: ObjectStorageAsyncClient) extends ObjectStorage.S
       ).map(r => ObjectStorageObjectListing.from(listing.namespace, listing.bucketName, r))
     }
 
-  override def getObject(namespace: String, bucket: String, name: String): ZStream[Blocking, BmcException, Byte] =
+  private def getObject(request: GetObjectRequest): ZStream[Blocking, BmcException, Byte] =
     ZStream
       .fromEffect(execute[GetObjectRequest, GetObjectResponse] { c =>
-        c.getObject(
-          GetObjectRequest.builder().namespaceName(namespace).bucketName(bucket).objectName(name).build(),
-          _: AsyncHandler[GetObjectRequest, GetObjectResponse]
-        )
+        c.getObject(request, _: AsyncHandler[GetObjectRequest, GetObjectResponse])
       })
       .flatMap(is => ZStream.fromInputStreamEffect(IO(is.getInputStream()).refineToOrDie[IOException]))
       .refineToOrDie[BmcException]
+
+  override def getObject(namespace: String, bucket: String, name: String, options: GetObjectOptions): ZStream[Blocking, BmcException, Byte] =
+    getObject(
+      GetObjectRequest
+        .builder()
+        .namespaceName(namespace)
+        .bucketName(bucket)
+        .objectName(name)
+        .range(options.range.map(r => new com.oracle.bmc.model.Range(r.startByte.map(Long.box).orNull, r.endByte.map(Long.box).orNull)).orNull)
+        .build()
+    )
 
   def execute[I, O](f: ObjectStorageAsyncClient => Function1[AsyncHandler[I, O], JFuture[O]]): IO[BmcException, O] =
     IO.effectAsync[BmcException, O] { cb =>
