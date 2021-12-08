@@ -35,7 +35,10 @@ package object objectstorage {
           case current                                             => self.getNextObjects(current, options).map(next => current -> Some(next))
         }
 
-      def getObject(namespace: String, bucketName: String, name: String): ZStream[Blocking, BmcException, Byte]
+      def getObject(namespace: String, bucketName: String, name: String): ZStream[Blocking, BmcException, Byte] =
+        getObject(namespace, bucketName, name, GetObjectOptions.default)
+
+      def getObject(namespace: String, bucketName: String, name: String, options: GetObjectOptions): ZStream[Blocking, BmcException, Byte]
     }
   }
 
@@ -61,6 +64,14 @@ package object objectstorage {
 
   def getObject(namespace: String, bucket: String, name: String): ZStream[ObjectStorage with Blocking, BmcException, Byte] =
     ZStream.accessStream(_.get.getObject(namespace, bucket, name))
+
+  def getObject(
+      namespace: String,
+      bucket: String,
+      name: String,
+      options: GetObjectOptions
+  ): ZStream[ObjectStorage with Blocking, BmcException, Byte] =
+    ZStream.accessStream(_.get.getObject(namespace, bucket, name, options))
 
   def paginateObjects(initialListing: ObjectStorageObjectListing, options: ListObjectsOptions): ObjectStorageStream[ObjectStorageObjectListing] =
     ZStream.accessStream[ObjectStorage](_.get.paginateObjects(initialListing, options))
