@@ -4,7 +4,7 @@ lazy val scala_213 = "2.13.8"
 lazy val V = new {
   val ociSdk                = "2.36.0"
   val scalaCollectionCompat = "2.8.0"
-  val zio                   = "2.0.0"
+  val zio                   = "1.0.15"
   val `zio-nio`             = "1.0.0-RC11"
 }
 
