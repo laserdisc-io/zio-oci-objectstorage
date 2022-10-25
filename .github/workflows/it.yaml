@@ -12,7 +12,7 @@ jobs:
     if: contains(github.event.pull_request.labels.*.name, 'safe for integration tests')
     strategy:
       matrix:
-        scala: [2.12.16, 2.13.8]
+        scala: [2.12.16, 2.13.10]
         java:
           - adopt@1.11
           - adopt@1.15
