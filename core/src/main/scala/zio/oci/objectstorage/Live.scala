@@ -1,5 +1,6 @@
 package zio.oci.objectstorage
 
+import com.oracle.bmc.Options
 import com.oracle.bmc.model.BmcException
 import com.oracle.bmc.objectstorage.ObjectStorageAsyncClient
 import com.oracle.bmc.objectstorage.responses.{GetObjectResponse, ListBucketsResponse, ListObjectsResponse}
@@ -99,8 +100,8 @@ object Live {
       .fromAutoCloseable(
         Task {
           // disable sdk's stream auto-close as it's handled by ZStream.fromInputStreamEffect
-          // https://github.com/oracle/oci-java-sdk/blob/c45baca744629cc4c55623ae2a29866ac7728a77/ApacheConnector-README.md#switching-off-auto-close-of-streams
-          com.oracle.bmc.http.internal.ResponseHelper.shouldAutoCloseResponseInputStream(false)
+          // https://github.com/oracle/oci-java-sdk/blob/v2.46.0/ApacheConnector-README.md#switching-off-auto-close-of-streams
+          Options.shouldAutoCloseResponseInputStream(false)
           ObjectStorageAsyncClient.builder().region(settings.region).build(settings.auth.auth)
         }
       )
