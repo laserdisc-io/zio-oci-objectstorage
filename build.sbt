@@ -50,7 +50,7 @@ lazy val flags = Seq(
   "-Ywarn-numeric-widen",
   "-Ywarn-value-discard",
   "-Xfatal-warnings",
-  "-Ywarn-unused",
+  "-Ywarn-unused:-nowarn",
   "-opt-warnings",
   "-Xlint:constant",
   "-Ywarn-extra-implicit"
