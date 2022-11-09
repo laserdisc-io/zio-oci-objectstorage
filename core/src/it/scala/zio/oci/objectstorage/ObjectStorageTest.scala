@@ -10,7 +10,6 @@ import zio.test._
 import java.security.MessageDigest
 
 object ObjectStorageLiveSpec extends DefaultRunnableSpec {
-  @annotation.nowarn
   val objectStorageSettings = ZLayer
     .fromEffect(
       for {
