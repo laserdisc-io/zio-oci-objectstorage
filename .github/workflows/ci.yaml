@@ -15,8 +15,8 @@ jobs:
     - uses: actions/setup-java@v3
       name: Setup Java
       with:
-        distribution: 'adopt'
-        java-version: '15'
+        distribution: 'temurin'
+        java-version: '17'
         cache: 'sbt'
     - name: Check with Scalafmt
       run: sbt ++2.13.10 fmtCheck
@@ -28,7 +28,7 @@ jobs:
         scala:
           - 2.12.17
           - 2.13.10
-        java: [ '11', '15' ]
+        java: [ '11', '17' ]
         os:
           - ubuntu-latest
     runs-on: ${{ matrix.os }}
@@ -37,7 +37,7 @@ jobs:
     - uses: actions/setup-java@v3
       name: Setup Java
       with:
-        distribution: 'adopt'
+        distribution: 'temurin'
         java-version: ${{ matrix.java }}
         cache: 'sbt'
     - name: Test (${{ matrix.scala }}, ${{ matrix.java }})
