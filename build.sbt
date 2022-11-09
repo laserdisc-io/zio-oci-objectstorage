@@ -2,11 +2,10 @@ lazy val scala_212 = "2.12.17"
 lazy val scala_213 = "2.13.10"
 
 lazy val V = new {
-  val ociSdk                 = "3.0.0"
-  val ociSdkJerseyHttpClient = "3.0.0-beta2"
-  val scalaCollectionCompat  = "2.8.1"
-  val zio                    = "1.0.17"
-  val `zio-nio`              = "1.0.0-RC11"
+  val ociSdk                = "3.0.0-beta2"
+  val scalaCollectionCompat = "2.8.1"
+  val zio                   = "1.0.17"
+  val `zio-nio`             = "1.0.0-RC11"
 }
 
 lazy val D = new {
@@ -30,7 +29,7 @@ lazy val D = new {
     "dev.zio" %% "zio-test-sbt" % V.zio
   )
 
-  val `httpclient-jersey` = "com.oracle.oci.sdk" % "oci-java-sdk-common-httpclient-jersey" % V.ociSdkJerseyHttpClient
+  val `httpclient-jersey` = "com.oracle.oci.sdk" % "oci-java-sdk-common-httpclient-jersey" % V.ociSdk
 }
 
 lazy val flags = Seq(
