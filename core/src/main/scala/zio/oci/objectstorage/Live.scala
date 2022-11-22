@@ -89,7 +89,8 @@ final class Live(unsafeClient: ObjectStorageAsyncClient) extends ObjectStorage {
           override def onSuccess(request: I, response: O): Unit    = cb(ZIO.succeed(response))
           override def onError(request: I, error: Throwable): Unit = cb(ZIO.fail(error).refineToOrDie[BmcException])
         }
-      ): Unit
+      )
+      ()
     }
 }
 
