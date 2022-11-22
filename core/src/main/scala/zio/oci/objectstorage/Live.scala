@@ -3,17 +3,16 @@ package zio.oci.objectstorage
 import com.oracle.bmc.http.client.Options
 import com.oracle.bmc.model.BmcException
 import com.oracle.bmc.objectstorage.ObjectStorageAsyncClient
-import com.oracle.bmc.objectstorage.responses.{GetObjectResponse, ListBucketsResponse, ListObjectsResponse}
 import com.oracle.bmc.objectstorage.requests.{GetObjectRequest, ListBucketsRequest, ListObjectsRequest}
+import com.oracle.bmc.objectstorage.responses.{GetObjectResponse, ListBucketsResponse, ListObjectsResponse}
 import com.oracle.bmc.responses.AsyncHandler
-import zio._
-import zio.blocking.Blocking
-import zio.stream.ZStream
+import zio.{Chunk, IO, ZIO}
+import zio.stream.{Stream, ZStream}
 
-import java.util.concurrent.{Future => JFuture}
 import java.io.IOException
+import java.util.concurrent.{Future => JFuture}
 
-final class Live(unsafeClient: ObjectStorageAsyncClient) extends ObjectStorage.Service {
+final class Live(unsafeClient: ObjectStorageAsyncClient) extends ObjectStorage {
   override def listBuckets(compartmentId: String, namespace: String): IO[BmcException, ObjectStorageBucketListing] =
     listBuckets(
       ListBucketsRequest
@@ -64,15 +63,15 @@ final class Live(unsafeClient: ObjectStorageAsyncClient) extends ObjectStorage.S
       ).map(r => ObjectStorageObjectListing.from(listing.namespace, listing.bucketName, r))
     }
 
-  private def getObject(request: GetObjectRequest): ZStream[Blocking, BmcException, Byte] =
+  private def getObject(request: GetObjectRequest): Stream[BmcException, Byte] =
     ZStream
-      .fromEffect(execute[GetObjectRequest, GetObjectResponse] { c =>
+      .fromZIO(execute[GetObjectRequest, GetObjectResponse] { c =>
         c.getObject(request, _: AsyncHandler[GetObjectRequest, GetObjectResponse])
       })
-      .flatMap(is => ZStream.fromInputStreamEffect(IO(is.getInputStream()).refineToOrDie[IOException]))
+      .flatMap(is => ZStream.fromInputStreamZIO(ZIO.attemptBlockingIO(is.getInputStream()).refineToOrDie[IOException]))
       .refineToOrDie[BmcException]
 
-  override def getObject(namespace: String, bucket: String, name: String, options: GetObjectOptions): ZStream[Blocking, BmcException, Byte] =
+  override def getObject(namespace: String, bucket: String, name: String, options: GetObjectOptions): Stream[BmcException, Byte] =
     getObject(
       GetObjectRequest
         .builder()
@@ -84,21 +83,21 @@ final class Live(unsafeClient: ObjectStorageAsyncClient) extends ObjectStorage.S
     )
 
   def execute[I, O](f: ObjectStorageAsyncClient => Function1[AsyncHandler[I, O], JFuture[O]]): IO[BmcException, O] =
-    IO.effectAsync[BmcException, O] { cb =>
+    ZIO.async[Any, BmcException, O] { cb =>
       f(unsafeClient)(
         new AsyncHandler[I, O] {
-          override def onSuccess(request: I, response: O): Unit    = cb(IO.succeed(response))
-          override def onError(request: I, error: Throwable): Unit = cb(IO.fail(error).refineToOrDie[BmcException])
+          override def onSuccess(request: I, response: O): Unit    = cb(ZIO.succeed(response))
+          override def onError(request: I, error: Throwable): Unit = cb(ZIO.fail(error).refineToOrDie[BmcException])
         }
-      )
+      ): Unit
     }
 }
 
 object Live {
   def connect(settings: ObjectStorageSettings) =
-    ZManaged
+    ZIO
       .fromAutoCloseable(
-        Task {
+        ZIO.attempt {
           // disable sdk's stream auto-close as it's handled by ZStream.fromInputStreamEffect
           // https://github.com/oracle/oci-java-sdk/blob/v3.0.0/ApacheConnector-README.md#switching-off-auto-close-of-streams
           Options.shouldAutoCloseResponseInputStream(false)
