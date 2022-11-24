@@ -2,21 +2,20 @@ package zio.oci.objectstorage
 
 import com.oracle.bmc.Region
 import com.oracle.bmc.auth.{SimpleAuthenticationDetailsProvider, SimplePrivateKeySupplier}
-import zio.{Chunk, ZLayer, system}
-import zio.blocking.Blocking
-import zio.stream.{ZSink, ZTransducer}
+import zio.{Chunk, Layer, System, ZLayer}
+import zio.stream.{ZPipeline, ZSink}
 import zio.test._
 
 import java.security.MessageDigest
 
-object ObjectStorageLiveSpec extends DefaultRunnableSpec {
+object ObjectStorageLiveSpec extends ZIOSpecDefault {
   val objectStorageSettings = ZLayer
-    .fromEffect(
+    .fromZIO(
       for {
-        userId      <- environment.Live.live(system.envOrElse("OCI_USER_ID", ""))
-        tenantId    <- environment.Live.live(system.envOrElse("OCI_TENANT_ID", ""))
-        privateKey  <- environment.Live.live(system.envOrElse("OCI_PRIVATE_KEY", ""))
-        fingerprint <- environment.Live.live(system.envOrElse("OCI_FINGERPRINT", ""))
+        userId      <- liveEnvironment(System.SystemLive.envOrElse("OCI_USER_ID", ""))
+        tenantId    <- liveEnvironment(System.SystemLive.envOrElse("OCI_TENANT_ID", ""))
+        privateKey  <- liveEnvironment(System.SystemLive.envOrElse("OCI_PRIVATE_KEY", ""))
+        fingerprint <- liveEnvironment(System.SystemLive.envOrElse("OCI_FINGERPRINT", ""))
       } yield ObjectStorageSettings(
         Region.US_ASHBURN_1,
         ObjectStorageAuth(
@@ -32,9 +31,11 @@ object ObjectStorageLiveSpec extends DefaultRunnableSpec {
     )
     .mapError(TestFailure.die)
 
-  val objectStorage = objectStorageSettings.flatMap(x => live(x.get[ObjectStorageSettings]).mapError(TestFailure.die))
+  val objectStorage: Layer[TestFailure[Nothing], ObjectStorage] =
+    objectStorageSettings.flatMap(x => ObjectStorage.live(x.get).mapError(TestFailure.die))
+
   override def spec =
-    ObjectStorageSuite.spec("ObjectStorageLiveSpec").provideCustomLayerShared(objectStorage) @@ TestAspect.ifEnvSet("OCI_PRIVATE_KEY")
+    ObjectStorageSuite.spec("ObjectStorageLiveSpec").provideLayerShared(objectStorage) @@ TestAspect.ifEnvSet("OCI_PRIVATE_KEY")
 }
 
 object ObjectStorageSuite {
@@ -48,19 +49,19 @@ object ObjectStorageSuite {
     }
     .map(d => String.format("%032x", new java.math.BigInteger(1, d.digest())))
 
-  def spec(label: String): Spec[ObjectStorage with Blocking, TestFailure[Exception], TestSuccess] =
+  def spec(label: String): Spec[ObjectStorage, Exception] =
     suite(label)(
-      testM("listAllObjects") {
+      test("listAllObjects") {
         for {
           list <- listAllObjects(namespace, bucketName).runCollect
         } yield assert(list.map(_.getName()))(Assertion.hasSameElements(List("first", "second", "third")))
       },
-      testM("listAllObjects with prefix") {
+      test("listAllObjects with prefix") {
         for {
           list <- listAllObjects(namespace, bucketName, ListObjectsOptions(Some("f"), None, None, 1, Set(ListObjectsOptions.Field.Name))).runCollect
         } yield assert(list.lastOption.map(_.getName()))(Assertion.equalTo(Some("first")))
       },
-      testM("listAllObjects with prefix and size") {
+      test("listAllObjects with prefix and size") {
         for {
           list <- listAllObjects(
             namespace,
@@ -69,17 +70,17 @@ object ObjectStorageSuite {
           ).runCollect
         } yield assert(list.lastOption.map(_.getSize().toLong))(Assertion.equalTo(Option(10000000L)))
       },
-      testM("getObject and compare size") {
+      test("getObject and compare size") {
         for {
-          o <- getObject(namespace, bucketName, "first").transduce(ZTransducer.utf8Decode).runCollect
+          o <- (getObject(namespace, bucketName, "first") >>> ZPipeline.utf8Decode).runCollect
         } yield assert(o.mkString.length)(Assertion.equalTo(4))
       },
-      testM("getObject and compare md5 digest") {
+      test("getObject and compare md5 digest") {
         for {
           o <- getObject(namespace, bucketName, "second").run(md5Digest)
         } yield assert(o)(Assertion.equalTo("55c783984393732b474914dbf3881240"))
       },
-      testM("getObject by range") {
+      test("getObject by range") {
         for {
           o <- getObject(namespace, bucketName, "second", GetObjectOptions(Some(GetObjectOptions.Range(Some(9999000), None)))).runCollect
         } yield assert(o.size)(Assertion.equalTo(1000))
