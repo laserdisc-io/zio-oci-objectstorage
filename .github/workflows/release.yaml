@@ -16,7 +16,7 @@ jobs:
         java-version: '17'
         cache: 'sbt'
         gpg-private-key: ${{ secrets.PGP_SECRET }}
-        gpg-passphrase: ${{ secrets.PGP_PASSPHRASE }}
+        gpg-passphrase: PGP_PASSPHRASE
     - name: Release for Scala 2.12
       env:
         PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
@@ -38,7 +38,7 @@ jobs:
         java-version: '17'
         cache: 'sbt'
         gpg-private-key: ${{ secrets.PGP_SECRET }}
-        gpg-passphrase: ${{ secrets.PGP_PASSPHRASE }}
+        gpg-passphrase: PGP_PASSPHRASE
     - name: Release for Scala 2.12
       env:
         PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
