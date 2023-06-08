@@ -1,4 +1,4 @@
-lazy val scala_212 = "2.12.17"
+lazy val scala_212 = "2.12.18"
 lazy val scala_213 = "2.13.10"
 
 lazy val V = new {
