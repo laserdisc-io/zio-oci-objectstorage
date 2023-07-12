@@ -4,7 +4,8 @@ import com.oracle.bmc.Region
 import com.oracle.bmc.auth.{
   BasicAuthenticationDetailsProvider,
   ConfigFileAuthenticationDetailsProvider,
-  InstancePrincipalsAuthenticationDetailsProvider
+  InstancePrincipalsAuthenticationDetailsProvider,
+  SessionTokenAuthenticationDetailsProvider
 }
 import zio.{Scope, UIO, ZIO}
 
@@ -23,16 +24,21 @@ object ObjectStorageAuth {
       .map(ObjectStorageAuth.apply)
       .mapError(e => InvalidAuthDetails(e.getMessage()))
 
+  private val defaultProfile = "DEFAULT"
+
   def const(auth: BasicAuthenticationDetailsProvider): UIO[ObjectStorageAuth] =
     ZIO.succeed(ObjectStorageAuth(auth))
-
-  val fromConfigFileDefaultProfile = fromConfigFileProfile("DEFAULT")
+  val fromConfigFileDefaultProfile = fromConfigFileProfile(defaultProfile)
 
   def fromConfigFileProfile(profile: String) =
     load(ZIO.attemptBlockingIO(new ConfigFileAuthenticationDetailsProvider(profile)))(p => ZIO.attempt(p))
 
   val fromInstancePrincipals =
     load(ZIO.attemptBlockingIO(InstancePrincipalsAuthenticationDetailsProvider.builder().build()))(p => ZIO.attempt(p))
+
+  val fromSessionTokenDefaultProfile = fromSessionToken(defaultProfile)
+  def fromSessionToken(profile: String) =
+    load(ZIO.attemptBlockingIO(new SessionTokenAuthenticationDetailsProvider(profile)))
 }
 
 final case class ObjectStorageSettings(region: Region, auth: ObjectStorageAuth)
