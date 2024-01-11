@@ -12,7 +12,7 @@ jobs:
     if: contains(github.event.pull_request.labels.*.name, 'safe for integration tests')
     strategy:
       matrix:
-        scala: [2.12.18, 2.13.12]
+        scala: [2.13.12, 3.3.1]
         java: [ '11', '17' ]
         os: [ubuntu-latest]
     runs-on: ${{ matrix.os }}
@@ -33,7 +33,7 @@ jobs:
         OCI_PRIVATE_KEY_BASE64: ${{ secrets.OCI_PRIVATE_KEY_BASE64 }}
 
     - name: Test (${{ matrix.scala }}, ${{ matrix.java }})
-      run: sbt ++${{ matrix.scala }} "IntegrationTest / test"
+      run: sbt ++${{ matrix.scala }} integration-tests/test
       env:
         OCI_USER_ID: ${{ secrets.OCI_USER_ID }}
         OCI_TENANT_ID: ${{ secrets.OCI_TENANT_ID }}

@@ -1,122 +1,64 @@
-lazy val scala_212 = "2.12.18"
-lazy val scala_213 = "2.13.12"
-
 lazy val V = new {
-  val ociSdk                = "3.30.0"
-  val scalaCollectionCompat = "2.11.0"
-  val zio                   = "2.0.19"
-  val `zio-nio`             = "2.0.2"
+  val ociSdk    = "3.31.1"
+  val `zio-nio` = "2.0.2"
 }
 
 lazy val D = new {
-  val objectStorage = Seq(
-    "com.oracle.oci.sdk" % "oci-java-sdk-objectstorage" % V.ociSdk
-  )
-
-  val scalaModules = Seq(
-    "org.scala-lang.modules" %% "scala-collection-compat" % V.scalaCollectionCompat
-  )
-
-  val zio = Seq(
-    "dev.zio" %% "zio"         % V.zio,
-    "dev.zio" %% "zio-streams" % V.zio
-  )
-
-  val `zio-nio` = "dev.zio" %% "zio-nio" % V.`zio-nio`
-
-  val zioTest = Seq(
-    "dev.zio" %% "zio-test"     % V.zio,
-    "dev.zio" %% "zio-test-sbt" % V.zio
-  )
-
-  val `httpclient-jersey` = "com.oracle.oci.sdk" % "oci-java-sdk-common-httpclient-jersey" % V.ociSdk
+  val objectStorage       = "com.oracle.oci.sdk" % "oci-java-sdk-objectstorage"            % V.ociSdk
+  val `zio-nio`           = "dev.zio"           %% "zio-nio"                               % V.`zio-nio`
+  val `httpclient-jersey` = "com.oracle.oci.sdk" % "oci-java-sdk-common-httpclient-jersey" % V.ociSdk % Test
 }
 
-lazy val flags = Seq(
-  "-deprecation",
-  "-encoding",
-  "UTF-8",
-  "-explaintypes",
-  "-Yrangepos",
-  "-feature",
-  "-language:higherKinds",
-  "-language:existentials",
-  "-language:implicitConversions",
-  "-unchecked",
-  "-Xlint:_,-type-parameter-shadow",
-  "-Xsource:2.13",
-  "-Ywarn-dead-code",
-  "-Ywarn-numeric-widen",
-  "-Ywarn-value-discard",
-  "-Xfatal-warnings",
-  "-Ywarn-unused",
-  "-opt-warnings",
-  "-Xlint:constant",
-  "-Ywarn-extra-implicit"
-)
+enablePlugins(ZioSbtEcosystemPlugin)
 
-def versionDependent(scalaVersion: String) =
-  CrossVersion.partialVersion(scalaVersion) match {
-    case Some((2, major)) if major >= 13 =>
-      flags ++ Seq(
-        "-Wconf:any:error",
-        "-Ymacro-annotations",
-        "-Xlint:-byname-implicit"
-      )
-    case _ =>
-      flags ++ Seq(
-        "-Xfuture",
-        "-Xlint:by-name-right-associative",
-        "-Xlint:unsound-match",
-        "-Yno-adapted-args",
-        "-Ypartial-unification",
-        "-Ywarn-inaccessible",
-        "-Ywarn-infer-any",
-        "-Ywarn-nullary-override",
-        "-Ywarn-nullary-unit"
-      )
-  }
-
-lazy val commonSettings = Seq(
-  organization       := "io.laserdisc",
-  scalaVersion       := scala_213,
-  crossScalaVersions := Seq(scala_212, scala_213),
-  scalacOptions ++= versionDependent(scalaVersion.value),
-  homepage          := Some(url("https://github.com/laserdisc-io/zio-oci-objectstorage")),
-  licenses += "MIT" -> url("http://opensource.org/licenses/MIT"),
-  developers += Developer("amir", "Amir Saeid", "amir@glgdgt.com", url("https://github.com/amir"))
+inThisBuild(
+  Seq(
+    name               := "ZIO OCI ObjectStorage",
+    zioVersion         := "2.0.21",
+    organization       := "io.laserdisc",
+    scalaVersion       := scala213.value,
+    crossScalaVersions := Seq(scala213.value, scala3.value),
+    homepage           := Some(url("https://github.com/laserdisc-io/zio-oci-objectstorage")),
+    licenses += "MIT"  -> url("http://opensource.org/licenses/MIT"),
+    developers += Developer("amir", "Amir Saeid", "amir@glgdgt.com", url("https://github.com/amir"))
+  )
 )
 
 lazy val testkit = project
   .in(file("testkit"))
-  .settings(commonSettings)
+  .settings(enableZIO(enableStreaming = true))
   .settings(
     name := "zio-oci-objectstorage-testkit",
-    libraryDependencies ++= D.zio ++ D.objectStorage ++ D.zioTest.map(_ % Test) :+ D.`zio-nio`,
-    testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework")
+    libraryDependencies ++= D.objectStorage :: D.`zio-nio` :: Nil
   )
-  .dependsOn(`zio-oci-objectstorage`)
+  .dependsOn(core)
 
-lazy val `zio-oci-objectstorage` = project
+lazy val core = project
   .in(file("core"))
-  .configs(IntegrationTest)
-  .settings(commonSettings)
-  .settings(Defaults.itSettings)
+  .settings(enableZIO(enableStreaming = true))
   .settings(
     name := "zio-oci-objectstorage",
-    libraryDependencies ++= D.zio ++ D.objectStorage ++ D.scalaModules ++ (D.zioTest :+ D.`httpclient-jersey`).map(_ % "it,test"),
-    testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework")
+    libraryDependencies ++= D.objectStorage :: D.`httpclient-jersey` :: Nil
   )
+
+lazy val `integration-tests` = project
+  .in(file("it"))
+  .settings(enableZIO(enableStreaming = true))
+  .settings(
+    name := "zio-oci-objectstorage-it",
+    libraryDependencies ++= D.objectStorage :: D.`httpclient-jersey` :: Nil,
+    publish / skip := true
+  )
+  .dependsOn(core)
 
 lazy val root = project
   .in(file("."))
-  .aggregate(`zio-oci-objectstorage`, testkit)
-  .settings(commonSettings)
+  .aggregate(core, `integration-tests`, testkit)
   .settings(
     publish / skip := true,
     addCommandAlias("fmtCheck", ";scalafmtCheckAll;scalafmtSbtCheck"),
-    addCommandAlias("fmt", ";Test / scalafmtAll;scalafmtAll;scalafmtSbt;Test / scalafmtAll"),
-    addCommandAlias("fullTest", ";clean;test;IntegrationTest / test"),
+    addCommandAlias("fmt", ";scalafmtAll;scalafmtSbt;Test/scalafmtAll"),
+    addCommandAlias("fullTest", ";clean;test"),
     addCommandAlias(
       "setReleaseOptions",
       "set scalacOptions ++= Seq(\"-opt:l:method\", \"-opt:l:inline\", \"-opt-inline-from:laserdisc.**\", \"-opt-inline-from:<sources>\")"
