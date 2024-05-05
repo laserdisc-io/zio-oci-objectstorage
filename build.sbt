@@ -1,5 +1,5 @@
 lazy val V = new {
-  val ociSdk    = "3.40.0"
+  val ociSdk    = "3.41.0"
   val `zio-nio` = "2.0.2"
 }
 
