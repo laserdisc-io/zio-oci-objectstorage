@@ -1,5 +1,5 @@
 lazy val V = new {
-  val ociSdk    = "3.44.1"
+  val ociSdk    = "3.44.2"
   val `zio-nio` = "2.0.2"
 }
 
@@ -14,7 +14,7 @@ enablePlugins(ZioSbtEcosystemPlugin)
 inThisBuild(
   Seq(
     name               := "ZIO OCI ObjectStorage",
-    zioVersion         := "2.1.5",
+    zioVersion         := "2.1.6",
     organization       := "io.laserdisc",
     scalaVersion       := scala213.value,
     crossScalaVersions := Seq(scala213.value, scala3.value),
