@@ -15,7 +15,7 @@ enablePlugins(ZioSbtEcosystemPlugin)
 inThisBuild(
   Seq(
     name               := "ZIO OCI ObjectStorage",
-    zioVersion         := "2.1.9",
+    zioVersion         := "2.1.11",
     organization       := "io.laserdisc",
     scalaVersion       := V.scala213,
     crossScalaVersions := Seq(V.scala213, scala3.value),
