@@ -1,6 +1,7 @@
 lazy val V = new {
   val ociSdk    = "3.50.2"
   val scala213  = "2.13.15"
+  val scala3.   = "3.3.4"
   val `zio-nio` = "2.0.2"
 }
 
@@ -18,7 +19,7 @@ inThisBuild(
     zioVersion         := "2.1.11",
     organization       := "io.laserdisc",
     scalaVersion       := V.scala213,
-    crossScalaVersions := Seq(V.scala213, scala3.value),
+    crossScalaVersions := Seq(V.scala213, V.scala3),
     homepage           := Some(url("https://github.com/laserdisc-io/zio-oci-objectstorage")),
     licenses += "MIT"  -> url("http://opensource.org/licenses/MIT"),
     developers += Developer("amir", "Amir Saeid", "amir@glgdgt.com", url("https://github.com/amir"))
