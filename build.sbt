@@ -1,3 +1,5 @@
+import org.typelevel.sbt.gha.WorkflowStep.Sbt
+
 val scala_213 = "2.13.16"
 val scala_3   = "3.3.5"
 
@@ -13,8 +15,8 @@ lazy val D = new {
   val `zio-nio`           = "dev.zio"           %% "zio-nio"                               % V.`zio-nio`
   val `zio-streams`       = "dev.zio"           %% "zio-streams"                           % V.zio
   val `httpclient-jersey` = "com.oracle.oci.sdk" % "oci-java-sdk-common-httpclient-jersey" % V.ociSdk % Test
-  val `zio-test`          = "dev.zio"           %% "zio-test"                              % V.zio % Test
-  val `zio-test-sbt`      = "dev.zio"           %% "zio-test-sbt"                          % V.zio % Test
+  val `zio-test`          = "dev.zio"           %% "zio-test"                              % V.zio    % Test
+  val `zio-test-sbt`      = "dev.zio"           %% "zio-test-sbt"                          % V.zio    % Test
 }
 
 ThisBuild / tlBaseVersion              := "0.7"
@@ -29,6 +31,26 @@ ThisBuild / developers                 := List(tlGitHubDev("amir", "Amir Saeid")
 ThisBuild / crossScalaVersions         := Seq(scala_213, scala_3)
 ThisBuild / scalaVersion               := scala_213
 ThisBuild / githubWorkflowJavaVersions := Seq(JavaSpec.temurin("11"), JavaSpec.temurin("17"), JavaSpec.temurin("21"))
+
+ThisBuild / githubWorkflowEnv += ("OCI_PRIVATE_KEY", "/tmp/oci_key.pem")
+ThisBuild / githubWorkflowBuildPreamble += WorkflowStep.Run(
+  commands = List("echo $OCI_PRIVATE_KEY_BASE64 | base64 -d > $OCI_PRIVATE_KEY"),
+  env = Map(("OCI_PRIVATE_KEY_BASE64", "${{ secrets.OCI_PRIVATE_KEY_BASE64 }}")),
+  name = Some("Set up OCI key")
+)
+ThisBuild / githubWorkflowBuild ~= {
+  _.map {
+    case sbt: Sbt if sbt.name == Some("Test") =>
+      sbt.concatEnv(
+        List(
+          ("OCI_USER_ID", "${{ secrets.OCI_USER_ID }}"),
+          ("OCI_TENANT_ID", "${{ secrets.OCI_TENANT_ID }}"),
+          ("OCI_FINGERPRINT", "${{ secrets.OCI_FINGERPRINT }}")
+        )
+      )
+    case other => other
+  }
+}
 
 lazy val commonSettings = Seq(
   headerEndYear := Some(2025),
@@ -90,4 +112,3 @@ lazy val `integration-tests` = project
       D.`zio-test-sbt`
     )
   )
-
