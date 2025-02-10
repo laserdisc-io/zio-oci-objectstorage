@@ -29,10 +29,10 @@ object ObjectStorageAuth {
   val fromConfigFileDefaultProfile = fromConfigFileProfile("DEFAULT")
 
   def fromConfigFileProfile(profile: String) =
-    load(ZIO.attemptBlockingIO(new ConfigFileAuthenticationDetailsProvider(profile)))(p => ZIO.attempt(p))
+    load(ZIO.attemptBlocking(new ConfigFileAuthenticationDetailsProvider(profile)))(p => ZIO.attempt(p))
 
   val fromInstancePrincipals =
-    load(ZIO.attemptBlockingIO(InstancePrincipalsAuthenticationDetailsProvider.builder().build()))(p => ZIO.attempt(p))
+    load(ZIO.attemptBlocking(InstancePrincipalsAuthenticationDetailsProvider.builder().build()))(p => ZIO.attempt(p))
 }
 
 final case class ObjectStorageSettings(region: Region, auth: ObjectStorageAuth)

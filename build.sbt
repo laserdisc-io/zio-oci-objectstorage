@@ -1,69 +1,93 @@
-lazy val V = new {
+val scala_213 = "2.13.16"
+val scala_3   = "3.3.5"
+
+val V = new {
   val ociSdk    = "3.55.1"
-  val scala213  = "2.13.15"
-  val scala3    = "3.3.4"
+  val zio       = "2.1.15"
   val `zio-nio` = "2.0.2"
 }
 
 lazy val D = new {
   val objectStorage       = "com.oracle.oci.sdk" % "oci-java-sdk-objectstorage"            % V.ociSdk
+  val zio                 = "dev.zio"           %% "zio"                                   % V.zio
   val `zio-nio`           = "dev.zio"           %% "zio-nio"                               % V.`zio-nio`
+  val `zio-streams`       = "dev.zio"           %% "zio-streams"                           % V.zio
   val `httpclient-jersey` = "com.oracle.oci.sdk" % "oci-java-sdk-common-httpclient-jersey" % V.ociSdk % Test
+  val `zio-test`          = "dev.zio"           %% "zio-test"                              % V.zio % Test
+  val `zio-test-sbt`      = "dev.zio"           %% "zio-test-sbt"                          % V.zio % Test
 }
 
-enablePlugins(ZioSbtEcosystemPlugin)
+ThisBuild / tlBaseVersion              := "0.7"
+ThisBuild / tlCiReleaseBranches        := Seq("master")
+ThisBuild / tlJdkRelease               := Some(11)
+ThisBuild / sonatypeCredentialHost     := Sonatype.sonatypeLegacy
+ThisBuild / organization               := "io.laserdisc"
+ThisBuild / organizationName           := "LaserDisc"
+ThisBuild / licenses                   := Seq(License.MIT)
+ThisBuild / startYear                  := Some(2021)
+ThisBuild / developers                 := List(tlGitHubDev("amir", "Amir Saeid"))
+ThisBuild / crossScalaVersions         := Seq(scala_213, scala_3)
+ThisBuild / scalaVersion               := scala_213
+ThisBuild / githubWorkflowJavaVersions := Seq(JavaSpec.temurin("11"), JavaSpec.temurin("17"), JavaSpec.temurin("21"))
 
-inThisBuild(
-  Seq(
-    name               := "ZIO OCI ObjectStorage",
-    zioVersion         := "2.1.14",
-    organization       := "io.laserdisc",
-    scalaVersion       := V.scala213,
-    crossScalaVersions := Seq(V.scala213, V.scala3),
-    homepage           := Some(url("https://github.com/laserdisc-io/zio-oci-objectstorage")),
-    licenses += "MIT"  -> url("http://opensource.org/licenses/MIT"),
-    developers += Developer("amir", "Amir Saeid", "amir@glgdgt.com", url("https://github.com/amir"))
-  )
+lazy val commonSettings = Seq(
+  headerEndYear := Some(2025),
+  scalacOptions ++= {
+    CrossVersion.partialVersion(scalaVersion.value) match {
+      case Some((2, major)) if major >= 13 => Seq("-Wconf:cat=lint-infer-any:s")
+      case _                               => Seq.empty
+    }
+  },
+  testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework"),
+  Test / fork := true
 )
 
+lazy val `zio-oci-objectstorage` = tlCrossRootProject
+  .aggregate(core, `integration-tests`, testkit)
+
 lazy val testkit = project
-  .in(file("testkit"))
-  .settings(enableZIO(enableStreaming = true))
+  .dependsOn(core)
+  .settings(commonSettings)
   .settings(
     name := "zio-oci-objectstorage-testkit",
-    libraryDependencies ++= D.objectStorage :: D.`zio-nio` :: Nil
+    libraryDependencies ++= Seq(
+      D.objectStorage,
+      D.zio,
+      D.`zio-nio`,
+      D.`zio-streams`,
+      D.`zio-test`,
+      D.`zio-test-sbt`
+    )
   )
-  .dependsOn(core)
 
 lazy val core = project
-  .in(file("core"))
-  .settings(enableZIO(enableStreaming = true))
+  .settings(commonSettings)
   .settings(
     name := "zio-oci-objectstorage",
-    libraryDependencies ++= D.objectStorage :: D.`httpclient-jersey` :: Nil
+    libraryDependencies ++= Seq(
+      D.objectStorage,
+      D.`httpclient-jersey`,
+      D.zio,
+      D.`zio-streams`,
+      D.`zio-test`,
+      D.`zio-test-sbt`
+    )
   )
 
 lazy val `integration-tests` = project
   .in(file("it"))
-  .settings(enableZIO(enableStreaming = true))
+  .dependsOn(core)
+  .enablePlugins(NoPublishPlugin)
+  .settings(commonSettings)
   .settings(
     name := "zio-oci-objectstorage-it",
-    libraryDependencies ++= D.objectStorage :: D.`httpclient-jersey` :: Nil,
-    publish / skip := true
+    libraryDependencies ++= Seq(
+      D.objectStorage,
+      D.`httpclient-jersey`,
+      D.zio,
+      D.`zio-streams`,
+      D.`zio-test`,
+      D.`zio-test-sbt`
+    )
   )
-  .dependsOn(core)
 
-lazy val root = project
-  .in(file("."))
-  .aggregate(core, `integration-tests`, testkit)
-  .settings(
-    publish / skip := true,
-    addCommandAlias("fmtCheck", ";scalafmtCheckAll;scalafmtSbtCheck"),
-    addCommandAlias("fmt", ";scalafmtAll;scalafmtSbt;Test/scalafmtAll"),
-    addCommandAlias("fullTest", ";clean;test"),
-    addCommandAlias(
-      "setReleaseOptions",
-      "set scalacOptions ++= Seq(\"-opt:l:method\", \"-opt:l:inline\", \"-opt-inline-from:laserdisc.**\", \"-opt-inline-from:<sources>\")"
-    ),
-    addCommandAlias("releaseIt", ";clean;setReleaseOptions;session list;compile;ci-release")
-  )
