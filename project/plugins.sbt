@@ -1,3 +1,2 @@
-addSbtPlugin("com.github.sbt" % "sbt-ci-release"    % "1.9.2")
-addSbtPlugin("dev.zio"        % "zio-sbt-ecosystem" % "0.4.0-alpha.30")
-addSbtPlugin("org.scalameta"  % "sbt-scalafmt"      % "2.5.2")
+addSbtPlugin("org.typelevel" % "sbt-typelevel"         % "0.7.7")
+addSbtPlugin("org.typelevel" % "sbt-typelevel-mergify" % "0.7.7")
