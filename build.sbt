@@ -61,7 +61,7 @@ lazy val commonSettings = Seq(
     }
   },
   testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework"),
-  Test / fork           := true,
+  Test / fork := true
 )
 
 lazy val `zio-oci-objectstorage` = tlCrossRootProject
