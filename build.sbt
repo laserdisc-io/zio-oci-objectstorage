@@ -19,7 +19,7 @@ lazy val D = new {
   val `zio-test-sbt`      = "dev.zio"           %% "zio-test-sbt"                          % V.zio    % Test
 }
 
-ThisBuild / tlBaseVersion              := "0.7"
+ThisBuild / tlBaseVersion              := "0.8"
 ThisBuild / tlCiReleaseBranches        := Seq("master")
 ThisBuild / tlJdkRelease               := Some(11)
 ThisBuild / sonatypeCredentialHost     := Sonatype.sonatypeLegacy

@@ -30,7 +30,7 @@ import zio.test._
 import zio.test.ZIOSpecDefault
 
 object ObjectStorageTestSpec extends ZIOSpecDefault {
-  private val root = Path("test-data")
+  private val root = Path("../test-data")
 
   private val testStub: Layer[Any, ObjectStorage] = ZLayer.succeed(Test.connect(root))
 
