@@ -31,7 +31,6 @@ ThisBuild / developers                 := List(tlGitHubDev("amir", "Amir Saeid")
 ThisBuild / crossScalaVersions         := Seq(scala_213, scala_3)
 ThisBuild / scalaVersion               := scala_213
 ThisBuild / githubWorkflowJavaVersions := Seq(JavaSpec.temurin("11"), JavaSpec.temurin("17"), JavaSpec.temurin("21"))
-ThisBuild / mimaPreviousArtifacts      := Set("io.laserdisc" %% "zio-oci-objectstorage" % "0.7.1")
 
 ThisBuild / githubWorkflowEnv += ("OCI_PRIVATE_KEY", "/tmp/oci_key.pem")
 ThisBuild / githubWorkflowBuildPreamble += WorkflowStep.Run(
@@ -62,7 +61,8 @@ lazy val commonSettings = Seq(
     }
   },
   testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework"),
-  Test / fork := true
+  Test / fork           := true,
+  mimaPreviousArtifacts := Set("io.laserdisc" %% "zio-oci-objectstorage" % "0.7.1")
 )
 
 lazy val `zio-oci-objectstorage` = tlCrossRootProject
