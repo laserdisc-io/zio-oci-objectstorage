@@ -19,7 +19,7 @@ lazy val D = new {
   val `zio-test-sbt`      = "dev.zio"           %% "zio-test-sbt"                          % V.zio    % Test
 }
 
-ThisBuild / tlBaseVersion              := "0.7"
+ThisBuild / tlBaseVersion              := "0.8"
 ThisBuild / tlCiReleaseBranches        := Seq("master")
 ThisBuild / tlJdkRelease               := Some(11)
 ThisBuild / sonatypeCredentialHost     := Sonatype.sonatypeLegacy
@@ -62,7 +62,6 @@ lazy val commonSettings = Seq(
   },
   testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework"),
   Test / fork           := true,
-  mimaPreviousArtifacts := Set("io.laserdisc" %% "zio-oci-objectstorage" % "0.7.1")
 )
 
 lazy val `zio-oci-objectstorage` = tlCrossRootProject
