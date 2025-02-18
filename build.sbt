@@ -4,7 +4,7 @@ val scala_213 = "2.13.16"
 val scala_3   = "3.3.5"
 
 val V = new {
-  val ociSdk    = "3.55.3"
+  val ociSdk    = "3.57.2"
   val zio       = "2.1.15"
   val `zio-nio` = "2.0.2"
 }
