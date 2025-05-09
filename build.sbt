@@ -1,7 +1,7 @@
 import org.typelevel.sbt.gha.WorkflowStep.Sbt
 
 val scala_213 = "2.13.16"
-val scala_3   = "3.3.5"
+val scala_3   = "3.3.6"
 
 val V = new {
   val ociSdk    = "3.64.0"
