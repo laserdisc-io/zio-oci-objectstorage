@@ -27,7 +27,6 @@ import zio.nio.file.Path
 import zio.stream.ZPipeline
 import zio.test.Assertion.{equalTo, hasSameElements}
 import zio.test._
-import zio.test.ZIOSpecDefault
 
 object ObjectStorageTestSpec extends ZIOSpecDefault {
   private val root = Path("../test-data")
