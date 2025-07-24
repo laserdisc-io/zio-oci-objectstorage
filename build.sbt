@@ -22,7 +22,6 @@ lazy val D = new {
 ThisBuild / tlBaseVersion              := "0.8"
 ThisBuild / tlCiReleaseBranches        := Seq("master")
 ThisBuild / tlJdkRelease               := Some(11)
-ThisBuild / sonatypeCredentialHost     := Sonatype.sonatypeLegacy
 ThisBuild / organization               := "io.laserdisc"
 ThisBuild / organizationName           := "LaserDisc"
 ThisBuild / licenses                   := Seq(License.MIT)
