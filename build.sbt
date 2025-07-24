@@ -5,7 +5,7 @@ val scala_3   = "3.3.6"
 
 val V = new {
   val ociSdk    = "3.69.0"
-  val zio       = "2.1.17"
+  val zio       = "2.1.20"
   val `zio-nio` = "2.0.2"
 }
 
@@ -22,7 +22,6 @@ lazy val D = new {
 ThisBuild / tlBaseVersion              := "0.8"
 ThisBuild / tlCiReleaseBranches        := Seq("master")
 ThisBuild / tlJdkRelease               := Some(11)
-ThisBuild / sonatypeCredentialHost     := Sonatype.sonatypeLegacy
 ThisBuild / organization               := "io.laserdisc"
 ThisBuild / organizationName           := "LaserDisc"
 ThisBuild / licenses                   := Seq(License.MIT)
