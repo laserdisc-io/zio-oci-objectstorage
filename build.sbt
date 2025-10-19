@@ -5,7 +5,7 @@ val scala_3   = "3.3.7"
 
 val V = new {
   val ociSdk    = "3.74.2"
-  val zio       = "2.1.21"
+  val zio       = "2.1.22"
   val `zio-nio` = "2.0.2"
 }
 
